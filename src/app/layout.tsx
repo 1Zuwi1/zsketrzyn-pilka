@@ -53,6 +53,7 @@ export default function RootLayout({
               <NavLink href="/">Tabela</NavLink>
               <NavLink href="/mecze">Mecze</NavLink>
               <NavLink href="/druzyny">Drużyny</NavLink>
+              <NavLink href="/strzelcy">Strzelcy</NavLink>
             </nav>
             <div className="ml-auto">
               <NavAuth />
@@ -61,11 +62,23 @@ export default function RootLayout({
           <div className="border-t border-ink/20 bg-ink text-lime overflow-hidden">
             <div className="ticker py-1.5 mono text-[11px] uppercase tracking-[0.2em]">
               {["a", "b"].map((k) => (
-                <div key={k} className="flex gap-12 px-6">
+                <div
+                  key={k}
+                  className="ticker-group"
+                  aria-hidden={k === "b" ? true : undefined}
+                >
                   <span>★ ZS Kętrzyn</span>
                   <span>Sezon 2025/2026</span>
-                  <span>★ Liga Szkolna</span>
-                  <span>Piłka nożna</span>
+                  <span>Liga Szkolna</span>
+                  <span>⚽ Piłka nożna</span>
+                  <span>★ Fair play</span>
+                  <span>Keep it on the ground</span>
+                  <span>⚽ Graj z klasą</span>
+                  <span>Boisko · Bramki · Emocje</span>
+                  <span>★ Drużyna przede wszystkim</span>
+                  <span>Sędzia ma zawsze rację</span>
+                  <span>⚽ 2 × 10 minut</span>
+                  <span>Żółta · Czerwona</span>
                 </div>
               ))}
             </div>

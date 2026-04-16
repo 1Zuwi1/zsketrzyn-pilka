@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FormBadges } from "@/components/form-badges";
 import { getMatches, getTeams } from "@/lib/repo";
 import { computeStandings } from "@/lib/standings";
 
@@ -81,7 +82,7 @@ export default async function HomePage() {
           <div className="flex items-end justify-between mb-4">
             <h2 className="display text-3xl sm:text-4xl">Klasyfikacja</h2>
             <div className="mono text-[11px] uppercase tracking-[0.25em] text-ink-soft hidden sm:block">
-              M / W / R / P / B+ / B− / +/− / PKT
+              M / W / R / P / B+ / B− / +/− / FORMA / PKT
             </div>
           </div>
           <div className="card overflow-hidden">
@@ -98,6 +99,9 @@ export default async function HomePage() {
                     <Th>B+</Th>
                     <Th>B−</Th>
                     <Th>+/−</Th>
+                    <th className="px-3 py-3 text-center hidden md:table-cell">
+                      Forma
+                    </th>
                     <th className="px-4 py-3 text-center bg-lime text-ink">
                       PKT
                     </th>
@@ -153,6 +157,9 @@ export default async function HomePage() {
                         <Td>
                           {s.goalDiff > 0 ? `+${s.goalDiff}` : s.goalDiff}
                         </Td>
+                        <td className="px-3 py-3 text-center hidden md:table-cell">
+                          <FormBadges form={s.form} />
+                        </td>
                         <td className="px-4 py-3 text-center display text-2xl">
                           {s.points}
                         </td>

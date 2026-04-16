@@ -1,6 +1,6 @@
 import "server-only";
 import { query } from "./db";
-import type { GoalWithNames, Match, Player, Team } from "./types";
+import type { GoalWithNames, Match, Player, ScorerRow, Team } from "./types";
 
 type TeamRow = {
   id: string;
@@ -118,5 +118,43 @@ export async function getGoals(matchId?: string): Promise<GoalWithNames[]> {
     minute: r.minute,
     ownGoal: !!r.own_goal,
     playerName: r.player_name,
+  }));
+}
+
+type ScorerDbRow = {
+  player_id: string;
+  player_name: string;
+  team_id: string;
+  team_name: string;
+  team_color: string;
+  team_short_name: string;
+  goals: number | string;
+};
+
+export async function getTopScorers(): Promise<ScorerRow[]> {
+  const rows = await query<ScorerDbRow>(
+    `SELECT
+       p.id AS player_id,
+       p.name AS player_name,
+       t.id AS team_id,
+       t.name AS team_name,
+       t.color AS team_color,
+       t.short_name AS team_short_name,
+       COUNT(*) AS goals
+     FROM match_goals g
+     JOIN players p ON p.id = g.player_id
+     JOIN teams   t ON t.id = p.team_id
+     WHERE g.own_goal = 0
+     GROUP BY p.id, p.name, t.id, t.name, t.color, t.short_name
+     ORDER BY goals DESC, p.name ASC`,
+  );
+  return rows.map((r) => ({
+    playerId: r.player_id,
+    playerName: r.player_name,
+    teamId: r.team_id,
+    teamName: r.team_name,
+    teamColor: r.team_color,
+    teamShortName: r.team_short_name,
+    goals: Number(r.goals),
   }));
 }

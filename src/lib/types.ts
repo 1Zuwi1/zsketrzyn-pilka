@@ -43,6 +43,8 @@ export type League = {
   matches: Match[];
 };
 
+export type FormResult = "W" | "D" | "L";
+
 export type Standing = {
   team: Team;
   played: number;
@@ -53,4 +55,15 @@ export type Standing = {
   goalsAgainst: number;
   goalDiff: number;
   points: number;
+  form: FormResult[]; // oldest → newest, up to last 5
+};
+
+export type ScorerRow = {
+  playerId: string;
+  playerName: string;
+  teamId: string;
+  teamName: string;
+  teamColor: string;
+  teamShortName: string;
+  goals: number;
 };
