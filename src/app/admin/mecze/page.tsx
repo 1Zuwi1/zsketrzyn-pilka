@@ -134,7 +134,7 @@ function Section({
       <div className="flex items-center gap-3">
         <span
           className={`display text-sm px-2.5 py-1 ${
-            dark ? "bg-ink text-lime" : "bg-lime text-ink"
+            dark ? "bg-ink text-lime-soft" : "bg-lime text-ink"
           }`}
         >
           {String(count).padStart(2, "0")}
@@ -247,7 +247,7 @@ function PlayedRow({
           <input type="hidden" name="id" value={match.id} />
           <button
             type="submit"
-            className="mono text-[11px] uppercase tracking-[0.2em] text-lime hover:underline"
+            className="mono text-[11px] uppercase tracking-[0.2em] text-lime-soft hover:underline"
           >
             wycofaj wynik
           </button>

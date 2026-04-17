@@ -84,7 +84,7 @@ export default async function AdminTeamRosterPage({
 
       <section>
         <div className="flex items-center gap-3 mb-4">
-          <span className="display text-sm px-2.5 py-1 bg-ink text-lime">
+          <span className="display text-sm px-2.5 py-1 bg-ink text-lime-soft">
             {String(players.length).padStart(2, "0")}
           </span>
           <h2 className="display text-2xl">Skład</h2>
