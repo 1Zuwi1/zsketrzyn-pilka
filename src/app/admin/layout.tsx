@@ -9,7 +9,7 @@ export default async function AdminLayout({
   await requireAdmin();
   return (
     <div className="space-y-8 rise">
-      <div className="card bg-ink text-lime p-6 sm:p-8 flex items-center justify-between flex-wrap gap-4">
+      <div className="card bg-pitch text-cream p-6 sm:p-8 flex items-center justify-between flex-wrap gap-4">
         <div>
           <div className="mono text-[11px] uppercase tracking-[0.3em] opacity-80">
             ★ Panel administratora

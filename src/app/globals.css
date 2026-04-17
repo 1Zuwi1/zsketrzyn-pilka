@@ -180,10 +180,12 @@ input, select, textarea, button { font-family: inherit; }
 }
 .field:focus { box-shadow: 4px 4px 0 0 var(--lime); }
 
-.card {
-  background: var(--chalk);
-  border: 2px solid var(--ink);
-  box-shadow: 4px 4px 0 0 var(--ink);
+@layer components {
+  .card {
+    background: var(--chalk);
+    border: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 0 var(--ink);
+  }
 }
 
 .tag {

@@ -96,7 +96,7 @@ function Card({
     tone === "lime"
       ? "bg-lime text-ink border-ink"
       : tone === "ink"
-        ? "bg-ink text-lime border-ink"
+        ? "bg-pitch text-cream border-ink"
         : "bg-chalk text-ink border-ink";
   return (
     <Link
