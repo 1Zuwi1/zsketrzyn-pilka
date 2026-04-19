@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "./auth-helpers";
-import { query, uid } from "./db";
+import { query, uid, withTransaction } from "./db";
 
 function str(v: FormDataEntryValue | null): string {
   return (v ?? "").toString().trim();
@@ -171,5 +171,140 @@ export async function deleteMatch(formData: FormData) {
   const id = str(formData.get("id"));
   if (!id) return;
   await query("DELETE FROM matches WHERE id = ?", [id]);
+  revalidateAll();
+}
+
+// ============ BACKUP ============
+type TeamBackup = { id: string; name: string; short_name: string; color: string };
+type PlayerBackup = {
+  id: string;
+  team_id: string;
+  name: string;
+  number: number | null;
+  position: string;
+};
+type MatchBackup = {
+  id: string;
+  home_team_id: string;
+  away_team_id: string;
+  match_date: string;
+  round_no: number | null;
+  home_score: number | null;
+  away_score: number | null;
+  played: number;
+};
+type GoalBackup = {
+  id: string;
+  match_id: string;
+  player_id: string;
+  team_id: string;
+  minute: number | null;
+  own_goal: number;
+};
+type Backup = {
+  version?: number;
+  teams: TeamBackup[];
+  players: PlayerBackup[];
+  matches: MatchBackup[];
+  match_goals: GoalBackup[];
+};
+
+function asStr(v: unknown): string {
+  return typeof v === "string" ? v : String(v ?? "");
+}
+function asNumOrNull(v: unknown): number | null {
+  if (v == null || v === "") return null;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+function asInt01(v: unknown): number {
+  return v ? 1 : 0;
+}
+
+function parseBackup(raw: unknown): Backup {
+  if (!raw || typeof raw !== "object") throw new Error("Nieprawidłowy plik.");
+  const o = raw as Record<string, unknown>;
+  const teams = Array.isArray(o.teams) ? (o.teams as TeamBackup[]) : null;
+  const players = Array.isArray(o.players) ? (o.players as PlayerBackup[]) : null;
+  const matches = Array.isArray(o.matches) ? (o.matches as MatchBackup[]) : null;
+  const goals = Array.isArray(o.match_goals)
+    ? (o.match_goals as GoalBackup[])
+    : null;
+  if (!teams || !players || !matches || !goals) {
+    throw new Error("Brakuje wymaganych sekcji (teams/players/matches/match_goals).");
+  }
+  return { version: asNumOrNull(o.version) ?? 1, teams, players, matches, match_goals: goals };
+}
+
+export async function importBackup(formData: FormData) {
+  await requireAdmin();
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Wybierz plik JSON z kopią zapasową.");
+  }
+  const text = await file.text();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("Plik nie jest prawidłowym JSON-em.");
+  }
+  const backup = parseBackup(parsed);
+
+  await withTransaction(async (run) => {
+    await run("SET FOREIGN_KEY_CHECKS = 0");
+    await run("DELETE FROM match_goals");
+    await run("DELETE FROM matches");
+    await run("DELETE FROM players");
+    await run("DELETE FROM teams");
+
+    for (const t of backup.teams) {
+      await run(
+        "INSERT INTO teams (id, name, short_name, color) VALUES (?, ?, ?, ?)",
+        [asStr(t.id), asStr(t.name), asStr(t.short_name), asStr(t.color) || "#2563eb"],
+      );
+    }
+    for (const p of backup.players) {
+      await run(
+        "INSERT INTO players (id, team_id, name, number, position) VALUES (?, ?, ?, ?, ?)",
+        [
+          asStr(p.id),
+          asStr(p.team_id),
+          asStr(p.name),
+          asNumOrNull(p.number),
+          asStr(p.position),
+        ],
+      );
+    }
+    for (const m of backup.matches) {
+      await run(
+        "INSERT INTO matches (id, home_team_id, away_team_id, match_date, round_no, home_score, away_score, played) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          asStr(m.id),
+          asStr(m.home_team_id),
+          asStr(m.away_team_id),
+          new Date(asStr(m.match_date)),
+          asNumOrNull(m.round_no),
+          asNumOrNull(m.home_score),
+          asNumOrNull(m.away_score),
+          asInt01(m.played),
+        ],
+      );
+    }
+    for (const g of backup.match_goals) {
+      await run(
+        "INSERT INTO match_goals (id, match_id, player_id, team_id, minute, own_goal) VALUES (?, ?, ?, ?, ?, ?)",
+        [
+          asStr(g.id),
+          asStr(g.match_id),
+          asStr(g.player_id),
+          asStr(g.team_id),
+          asNumOrNull(g.minute),
+          asInt01(g.own_goal),
+        ],
+      );
+    }
+    await run("SET FOREIGN_KEY_CHECKS = 1");
+  });
   revalidateAll();
 }

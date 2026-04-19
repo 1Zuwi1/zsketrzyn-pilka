@@ -27,6 +27,26 @@ export async function query<T = unknown>(
   return rows as T[];
 }
 
+export async function withTransaction<T>(
+  fn: (run: (sql: string, params?: (string | number | Date | null)[]) => Promise<void>) => Promise<T>,
+): Promise<T> {
+  const conn = await getPool().getConnection();
+  try {
+    await conn.beginTransaction();
+    const run = async (sql: string, params: (string | number | Date | null)[] = []) => {
+      await conn.execute(sql, params);
+    };
+    const result = await fn(run);
+    await conn.commit();
+    return result;
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+}
+
 export function uid(): string {
   return (
     Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
