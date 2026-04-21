@@ -208,8 +208,9 @@ function CombinedPitch({
   //   gość:  cx = 100 - p.y * 0.5               (100 = bramka gości, 50 = środek)
   //          cy = 100 - p.x                     (lustro w pionie, żeby nie nakładali się)
   return (
-    <div className="relative pitch-stripes w-full max-w-3xl mx-auto aspect-[5/3] sm:aspect-[16/9] border-b-2 border-ink overflow-hidden">
-      <PitchLinesH />
+    <div className="relative pitch-stripes w-full border-b-2 border-ink overflow-hidden">
+      <div className="relative w-full max-w-3xl mx-auto aspect-[5/3] sm:aspect-[16/9]">
+        <PitchLinesH />
 
       {homeResolved.synthetic ? (
         <HalfPlaceholder
@@ -250,6 +251,7 @@ function CombinedPitch({
           />
         ))
       )}
+      </div>
     </div>
   );
 }
