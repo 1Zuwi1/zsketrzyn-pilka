@@ -191,6 +191,7 @@ export async function saveLineup(
   }
 
   revalidatePath(`/mecze/${input.matchId}`);
+  revalidatePath(`/mecze/${input.matchId}/sklady`);
   return { ok: true };
 }
 
