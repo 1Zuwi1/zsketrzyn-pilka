@@ -72,7 +72,7 @@ export function MatchLineupsBoard({
   return (
     <div className="card p-0 overflow-hidden">
       {/* Pasek nagłówkowy z logotypami i formacjami */}
-      <div className="grid grid-cols-[1fr_auto_1fr] items-stretch bg-ink text-chalk">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch bg-ink text-chalk">
         <TeamHeader
           team={home}
           align="left"
@@ -80,7 +80,7 @@ export function MatchLineupsBoard({
           canEdit={canEditHome}
           matchId={matchId}
         />
-        <div className="flex items-center justify-center px-3 mono text-[10px] uppercase tracking-[0.3em] text-lime">
+        <div className="flex items-center justify-center px-2 sm:px-3 mono text-[10px] uppercase tracking-[0.3em] text-lime">
           vs
         </div>
         <TeamHeader
@@ -148,30 +148,32 @@ function TeamHeader({
   const isLeft = align === "left";
   return (
     <div
-      className={`flex items-center gap-3 p-3 sm:p-4 ${
+      className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-4 min-w-0 ${
         isLeft ? "" : "flex-row-reverse text-right"
       }`}
       style={{ backgroundColor: team.color }}
     >
-      <div className="w-10 h-10 border-2 border-ink flex items-center justify-center display text-sm shrink-0 bg-chalk/20">
+      <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-ink flex items-center justify-center display text-xs sm:text-sm shrink-0 bg-chalk/20">
         <span className="text-chalk mix-blend-difference">
           {team.shortName.slice(0, 3).toUpperCase()}
         </span>
       </div>
       <div className="flex-1 min-w-0">
-        <div className="display text-lg sm:text-xl text-chalk mix-blend-difference truncate">
+        <div className="display text-sm sm:text-xl text-chalk mix-blend-difference truncate leading-tight">
           {team.name}
         </div>
-        <div className="mono text-[10px] uppercase tracking-[0.25em] text-chalk mix-blend-difference opacity-80">
+        <div className="mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-chalk mix-blend-difference opacity-80 truncate">
           {formation ?? "skład nieustawiony"}
         </div>
       </div>
       {canEdit && (
         <Link
           href={`/mecze/${matchId}/sklady/edytuj?team=${team.id}`}
-          className="btn-primary text-[10px] sm:text-xs whitespace-nowrap"
+          className="btn-primary !px-2 !py-1 text-[10px] sm:!px-3 sm:!py-2 sm:text-xs shrink-0 whitespace-nowrap"
+          aria-label="Edytuj skład"
         >
-          Edytuj
+          <span className="sm:hidden">✎</span>
+          <span className="hidden sm:inline">Edytuj</span>
         </Link>
       )}
     </div>
@@ -373,16 +375,15 @@ function SubsColumn({
   align: "left" | "right";
 }) {
   const isLeft = align === "left";
+  const rev = isLeft ? "" : "sm:flex-row-reverse sm:text-right";
   return (
-    <div className="p-0">
+    <div className="p-0 min-w-0">
       <div
-        className={`px-4 py-2 mono text-[11px] uppercase tracking-[0.3em] flex items-center gap-2 ${
-          isLeft ? "" : "flex-row-reverse text-right"
-        }`}
+        className={`px-4 py-2 mono text-[11px] uppercase tracking-[0.3em] flex items-center gap-2 ${rev}`}
         style={{ backgroundColor: team.color }}
       >
         <span className="text-chalk mix-blend-difference">{title}</span>
-        <span className="text-chalk mix-blend-difference opacity-70">
+        <span className="text-chalk mix-blend-difference opacity-70 truncate">
           · {team.shortName}
         </span>
       </div>
@@ -395,9 +396,7 @@ function SubsColumn({
             return (
               <li
                 key={p.playerId}
-                className={`flex items-center gap-3 px-4 py-2 ${
-                  isLeft ? "" : "flex-row-reverse text-right"
-                }`}
+                className={`flex items-center gap-3 px-4 py-2 ${rev}`}
               >
                 <div
                   className="w-8 h-8 flex items-center justify-center display text-sm shrink-0 border-2 border-ink"

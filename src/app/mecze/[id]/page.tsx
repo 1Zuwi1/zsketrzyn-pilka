@@ -83,12 +83,12 @@ export default async function MatchDetailPage({
           </span>
         </div>
 
-        <div className="pitch-stripes text-chalk p-6 sm:p-10">
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8">
+        <div className="pitch-stripes text-chalk p-4 sm:p-10">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-8">
             <TeamHero team={home} align="right" />
             <div className="flex flex-col items-center gap-2 shrink-0">
               <div
-                className={`display text-[clamp(3rem,9vw,7rem)] leading-none tabular px-4 py-1 border-2 ${
+                className={`display text-[clamp(2rem,9vw,7rem)] leading-none tabular px-2 sm:px-4 py-1 border-2 ${
                   match.played
                     ? "bg-lime text-ink border-lime"
                     : "border-chalk/40"
@@ -243,22 +243,22 @@ function TeamHero({
   return (
     <Link
       href={`/druzyny/${team.id}`}
-      className={`flex items-center gap-3 sm:gap-5 min-w-0 group ${
+      className={`flex items-center gap-2 sm:gap-5 min-w-0 group ${
         align === "right" ? "justify-end text-right" : ""
       }`}
     >
       {align === "right" && (
-        <div className="min-w-0">
-          <div className="display text-[clamp(1.5rem,3.5vw,3rem)] leading-[0.9] truncate group-hover:text-lime">
+        <div className="min-w-0 flex-1">
+          <div className="display text-[clamp(1rem,3.5vw,3rem)] leading-[0.9] truncate group-hover:text-lime">
             {team.name}
           </div>
-          <div className="mono text-[10px] uppercase tracking-[0.3em] opacity-70">
+          <div className="mono text-[9px] sm:text-[10px] uppercase tracking-[0.25em] opacity-70 truncate">
             {team.shortName}
           </div>
         </div>
       )}
       <div
-        className="w-16 h-16 sm:w-24 sm:h-24 border-2 border-chalk/60 shrink-0 flex items-center justify-center display text-2xl sm:text-4xl"
+        className="w-12 h-12 sm:w-24 sm:h-24 border-2 border-chalk/60 shrink-0 flex items-center justify-center display text-lg sm:text-4xl"
         style={{ backgroundColor: team.color }}
       >
         <span className="text-chalk mix-blend-difference">
@@ -266,11 +266,11 @@ function TeamHero({
         </span>
       </div>
       {align === "left" && (
-        <div className="min-w-0">
-          <div className="display text-[clamp(1.5rem,3.5vw,3rem)] leading-[0.9] truncate group-hover:text-lime">
+        <div className="min-w-0 flex-1">
+          <div className="display text-[clamp(1rem,3.5vw,3rem)] leading-[0.9] truncate group-hover:text-lime">
             {team.name}
           </div>
-          <div className="mono text-[10px] uppercase tracking-[0.3em] opacity-70">
+          <div className="mono text-[9px] sm:text-[10px] uppercase tracking-[0.25em] opacity-70 truncate">
             {team.shortName}
           </div>
         </div>
