@@ -249,6 +249,7 @@ function CombinedPitch({
               color={away.color}
               cx={100 - p.x}
               cy={100 - p.y * 0.5}
+              labelAbove
             />
           ))
         )}
@@ -306,18 +307,26 @@ function PlayerDot({
   color,
   cx,
   cy,
+  labelAbove = false,
 }: {
   player: Player | null;
   lp: LineupPlayer;
   color: string;
   cx: number;
   cy: number;
+  labelAbove?: boolean;
 }) {
+  const label = (
+    <div className="px-1.5 py-0.5 bg-ink text-chalk mono text-[9px] sm:text-[10px] uppercase tracking-[0.1em] max-w-[68px] sm:max-w-[90px] truncate leading-none">
+      {player?.name.split(" ").slice(-1)[0] ?? "?"}
+    </div>
+  );
   return (
     <div
       className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
       style={{ left: `${cx}%`, top: `${cy}%` }}
     >
+      {labelAbove && <div className="mb-1">{label}</div>}
       <div
         className="relative w-8 h-8 sm:w-11 sm:h-11 rounded-full border-2 border-ink flex items-center justify-center display text-xs sm:text-base shadow"
         style={{ backgroundColor: color }}
@@ -327,9 +336,7 @@ function PlayerDot({
           {lp.shirtNumber ?? "—"}
         </span>
       </div>
-      <div className="mt-1 px-1.5 py-0.5 bg-ink text-chalk mono text-[9px] sm:text-[10px] uppercase tracking-[0.1em] max-w-[68px] sm:max-w-[90px] truncate leading-none">
-        {player?.name.split(" ").slice(-1)[0] ?? "?"}
-      </div>
+      {!labelAbove && <div className="mt-1">{label}</div>}
     </div>
   );
 }
