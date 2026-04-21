@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { addPlayer, deletePlayer } from "@/lib/actions";
-import { getPlayers, getTeam } from "@/lib/repo";
+import { ResetPasswordButton } from "@/components/reset-password-button";
+import { addPlayer, deletePlayer, updatePlayer } from "@/lib/actions";
+import { getAllUsers, getPlayers, getTeam } from "@/lib/repo";
+import { createCaptain, updateUserRole } from "@/lib/user-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,10 @@ export default async function AdminTeamRosterPage({
   const { id } = await params;
   const team = await getTeam(id);
   if (!team) notFound();
-  const players = await getPlayers(id);
+  const [players, users] = await Promise.all([getPlayers(id), getAllUsers()]);
+  const teamCaptains = users.filter(
+    (u) => u.role === "captain" && u.teamId === id,
+  );
 
   return (
     <div className="space-y-8">
@@ -45,6 +50,79 @@ export default async function AdminTeamRosterPage({
           </div>
         </div>
       </header>
+
+      <section className="card p-6">
+        <div className="mono text-[11px] uppercase tracking-[0.3em] text-ink-soft">
+          Kapitan drużyny
+        </div>
+        <h2 className="display text-2xl mt-1 mb-4">
+          Zarządzanie kontem kapitana
+        </h2>
+
+        {teamCaptains.length === 0 ? (
+          <p className="mb-4 italic text-ink-soft text-sm">
+            Ta drużyna nie ma jeszcze kapitana.
+          </p>
+        ) : (
+          <ul className="mb-5 space-y-2">
+            {teamCaptains.map((c) => (
+              <li
+                key={c.id}
+                className="flex items-center gap-3 p-2 border-2 border-ink/10 bg-cream-soft"
+              >
+                <div className="w-8 h-8 rounded-full bg-ink text-lime flex items-center justify-center display text-sm shrink-0">
+                  {c.name.slice(0, 1).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate">{c.name}</div>
+                  <div className="mono text-[10px] uppercase tracking-[0.25em] text-ink-soft truncate">
+                    {c.email}
+                  </div>
+                </div>
+                <span className="tag bg-lime text-ink border-ink">Kapitan</span>
+                <ResetPasswordButton userId={c.id} userEmail={c.email} />
+                <form action={updateUserRole}>
+                  <input type="hidden" name="userId" value={c.id} />
+                  <input type="hidden" name="role" value="user" />
+                  <input type="hidden" name="teamId" value="" />
+                  <button
+                    type="submit"
+                    className="mono text-[11px] uppercase tracking-[0.2em] text-rust hover:underline"
+                  >
+                    odbierz
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <form
+          action={createCaptain}
+          className="grid sm:grid-cols-[1fr_1fr_1fr_auto] gap-3"
+        >
+          <input type="hidden" name="teamId" value={team.id} />
+          <input name="name" placeholder="Imię i nazwisko" className="field" />
+          <input
+            name="email"
+            type="email"
+            placeholder="kapitan@szkola.pl"
+            required
+            className="field"
+          />
+          <input
+            name="password"
+            type="password"
+            placeholder="Hasło (min. 6)"
+            required
+            minLength={6}
+            className="field"
+          />
+          <button type="submit" className="btn-primary">
+            Dodaj kapitana
+          </button>
+        </form>
+      </section>
 
       <section className="card p-6">
         <div className="mono text-[11px] uppercase tracking-[0.3em] text-ink-soft">
@@ -95,40 +173,57 @@ export default async function AdminTeamRosterPage({
             Brak zawodników.
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid gap-3">
             {players.map((p) => (
-              <div
+              <form
                 key={p.id}
-                className="card flex items-center gap-3 p-3"
+                action={updatePlayer}
+                className="card grid sm:grid-cols-[64px_1fr_180px_auto_auto] items-center gap-3 p-3"
               >
+                <input type="hidden" name="id" value={p.id} />
+                <input type="hidden" name="teamId" value={team.id} />
                 <div
-                  className="w-12 h-12 flex items-center justify-center display text-2xl shrink-0 border-2 border-ink"
+                  className="relative w-14 h-14 border-2 border-ink flex items-center justify-center shrink-0"
                   style={{ backgroundColor: team.color }}
                 >
-                  <span className="text-chalk mix-blend-difference">
-                    {p.number ?? "—"}
-                  </span>
+                  <input
+                    name="number"
+                    type="number"
+                    min={0}
+                    defaultValue={p.number ?? ""}
+                    className="w-full h-full bg-transparent display text-2xl text-center text-chalk mix-blend-difference outline-none"
+                    aria-label="Numer"
+                  />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate">{p.name}</div>
-                  {p.position && (
-                    <div className="mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">
-                      {p.position}
-                    </div>
-                  )}
-                </div>
-                <form action={deletePlayer}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <input type="hidden" name="teamId" value={team.id} />
-                  <button
-                    type="submit"
-                    className="btn-danger text-xs"
-                    aria-label="Usuń"
-                  >
-                    ✕
-                  </button>
-                </form>
-              </div>
+                <input
+                  name="name"
+                  defaultValue={p.name}
+                  className="field"
+                  placeholder="Imię i nazwisko"
+                />
+                <select
+                  name="position"
+                  defaultValue={p.position || ""}
+                  className="field"
+                >
+                  <option value="">— pozycja —</option>
+                  <option value="Bramkarz">Bramkarz</option>
+                  <option value="Obrońca">Obrońca</option>
+                  <option value="Pomocnik">Pomocnik</option>
+                  <option value="Napastnik">Napastnik</option>
+                </select>
+                <button type="submit" className="btn-ghost text-xs">
+                  Zapisz
+                </button>
+                <button
+                  type="submit"
+                  formAction={deletePlayer}
+                  className="btn-danger text-xs"
+                  aria-label="Usuń"
+                >
+                  ✕
+                </button>
+              </form>
             ))}
           </div>
         )}

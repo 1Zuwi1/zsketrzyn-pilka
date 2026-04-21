@@ -22,6 +22,7 @@ export default async function AdminLayout({
           <AdminLink href="/admin">Start</AdminLink>
           <AdminLink href="/admin/druzyny">Drużyny</AdminLink>
           <AdminLink href="/admin/mecze">Mecze</AdminLink>
+          <AdminLink href="/admin/uzytkownicy">Użytkownicy</AdminLink>
           <AdminLink href="/admin/backup">Backup</AdminLink>
         </nav>
       </div>

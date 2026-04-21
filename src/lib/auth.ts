@@ -17,6 +17,18 @@ export const auth = betterAuth({
         defaultValue: "user",
         input: false,
       },
+      teamId: {
+        type: "string",
+        required: false,
+        defaultValue: null,
+        input: false,
+      },
+      mustChangePassword: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+      },
     },
   },
   session: {

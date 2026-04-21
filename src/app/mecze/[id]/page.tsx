@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { MatchTabs } from "@/components/match-tabs";
 import {
   getGoals,
   getMatch,
@@ -47,12 +48,15 @@ export default async function MatchDetailPage({
 
   return (
     <div className="space-y-10 rise">
-      <Link
-        href="/mecze"
-        className="mono text-[11px] uppercase tracking-[0.3em] text-ink-soft hover:text-pitch"
-      >
-        ← Terminarz
-      </Link>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <Link
+          href="/mecze"
+          className="mono text-[11px] uppercase tracking-[0.3em] text-ink-soft hover:text-pitch"
+        >
+          ← Terminarz
+        </Link>
+        <MatchTabs matchId={match.id} active="przebieg" />
+      </div>
 
       <header className="border-2 border-ink overflow-hidden">
         <div className="bg-ink text-cream px-5 py-3 flex items-center justify-between flex-wrap gap-2 mono text-[11px] uppercase tracking-[0.25em]">

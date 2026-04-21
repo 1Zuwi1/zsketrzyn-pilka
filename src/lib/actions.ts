@@ -74,6 +74,24 @@ export async function addPlayer(formData: FormData) {
   revalidatePath(`/admin/druzyny/${teamId}`);
 }
 
+export async function updatePlayer(formData: FormData) {
+  await requireAdmin();
+  const id = str(formData.get("id"));
+  const teamId = str(formData.get("teamId"));
+  const name = str(formData.get("name"));
+  const number = numOrNull(formData.get("number"));
+  const position = str(formData.get("position"));
+  if (!id) return;
+  await query(
+    "UPDATE players SET name = COALESCE(NULLIF(?, ''), name), number = ?, position = ? WHERE id = ?",
+    [name, number, position, id],
+  );
+  if (teamId) {
+    revalidatePath(`/druzyny/${teamId}`);
+    revalidatePath(`/admin/druzyny/${teamId}`);
+  }
+}
+
 export async function deletePlayer(formData: FormData) {
   await requireAdmin();
   const id = str(formData.get("id"));
@@ -111,6 +129,11 @@ export async function setMatchResult(formData: FormData) {
     "UPDATE matches SET home_score = ?, away_score = ?, played = 1 WHERE id = ?",
     [homeScore, awayScore, id],
   );
+  // Zamrożenie składów - po rozegraniu stają się snapshotem historycznym.
+  await query(
+    "UPDATE match_lineups SET locked_at = NOW() WHERE match_id = ? AND locked_at IS NULL",
+    [id],
+  );
   revalidateAll();
 }
 
@@ -120,6 +143,11 @@ export async function clearMatchResult(formData: FormData) {
   if (!id) return;
   await query(
     "UPDATE matches SET home_score = NULL, away_score = NULL, played = 0 WHERE id = ?",
+    [id],
+  );
+  // Odblokuj składy gdy admin wycofa wynik.
+  await query(
+    "UPDATE match_lineups SET locked_at = NULL WHERE match_id = ?",
     [id],
   );
   revalidateAll();

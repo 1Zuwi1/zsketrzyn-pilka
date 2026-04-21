@@ -1,6 +1,16 @@
 import "server-only";
 import { query } from "./db";
-import type { GoalWithNames, Match, Player, ScorerRow, Team } from "./types";
+import type {
+  AppUser,
+  GoalWithNames,
+  LineupPlayer,
+  Match,
+  MatchLineup,
+  Player,
+  ScorerRow,
+  Team,
+  UserRole,
+} from "./types";
 
 type TeamRow = {
   id: string;
@@ -130,6 +140,98 @@ type ScorerDbRow = {
   team_short_name: string;
   goals: number | string;
 };
+
+type LineupRow = {
+  match_id: string;
+  team_id: string;
+  formation: string;
+  starting_xi: string | LineupPlayer[];
+  substitutes: string | LineupPlayer[];
+  coach: string | null;
+  updated_by: string | null;
+  updated_at: Date | string;
+  locked_at: Date | string | null;
+};
+
+function parseJsonField<T>(v: unknown): T[] {
+  if (!v) return [] as T[];
+  if (Array.isArray(v)) return v as T[];
+  if (typeof v === "string") {
+    try {
+      const parsed = JSON.parse(v);
+      return Array.isArray(parsed) ? (parsed as T[]) : ([] as T[]);
+    } catch {
+      return [] as T[];
+    }
+  }
+  return [] as T[];
+}
+
+function dateToIso(v: Date | string | null): string | null {
+  if (v == null) return null;
+  return v instanceof Date ? v.toISOString() : new Date(v).toISOString();
+}
+
+function lineupFrom(r: LineupRow): MatchLineup {
+  return {
+    matchId: r.match_id,
+    teamId: r.team_id,
+    formation: r.formation,
+    startingXI: parseJsonField<LineupPlayer>(r.starting_xi),
+    substitutes: parseJsonField<LineupPlayer>(r.substitutes),
+    coach: r.coach,
+    updatedBy: r.updated_by,
+    updatedAt: dateToIso(r.updated_at) ?? new Date().toISOString(),
+    lockedAt: dateToIso(r.locked_at),
+  };
+}
+
+export async function getMatchLineups(matchId: string): Promise<MatchLineup[]> {
+  const rows = await query<LineupRow>(
+    "SELECT * FROM match_lineups WHERE match_id = ?",
+    [matchId],
+  );
+  return rows.map(lineupFrom);
+}
+
+export async function getMatchLineup(
+  matchId: string,
+  teamId: string,
+): Promise<MatchLineup | null> {
+  const rows = await query<LineupRow>(
+    "SELECT * FROM match_lineups WHERE match_id = ? AND team_id = ? LIMIT 1",
+    [matchId, teamId],
+  );
+  return rows[0] ? lineupFrom(rows[0]) : null;
+}
+
+type AppUserRow = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  teamId: string | null;
+  createdAt: Date | string;
+};
+
+function userRoleFrom(role: string): UserRole {
+  if (role === "admin" || role === "captain") return role;
+  return "user";
+}
+
+export async function getAllUsers(): Promise<AppUser[]> {
+  const rows = await query<AppUserRow>(
+    "SELECT id, email, name, role, teamId, createdAt FROM user ORDER BY createdAt DESC",
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    email: r.email,
+    name: r.name,
+    role: userRoleFrom(r.role),
+    teamId: r.teamId,
+    createdAt: dateToIso(r.createdAt) ?? "",
+  }));
+}
 
 export async function getTopScorers(): Promise<ScorerRow[]> {
   const rows = await query<ScorerDbRow>(

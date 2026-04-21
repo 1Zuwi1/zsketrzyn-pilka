@@ -44,6 +44,31 @@ function LoginInner() {
           return;
         }
       }
+      // Sprawdź czy user musi zmienić hasło (konto założone przez admina).
+      try {
+        const res = await fetch("/api/me/must-change-password", {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = (await res.json()) as {
+            mustChangePassword?: boolean;
+            role?: string;
+            teamId?: string | null;
+          };
+          if (data.mustChangePassword) {
+            router.push("/zmien-haslo?forced=1");
+            router.refresh();
+            return;
+          }
+          if (data.role === "captain" && data.teamId) {
+            router.push(`/druzyny/${data.teamId}`);
+            router.refresh();
+            return;
+          }
+        }
+      } catch {
+        /* ignoruj i spadaj do default */
+      }
       router.push("/admin");
       router.refresh();
     } finally {

@@ -8,7 +8,7 @@ export function NavAuth() {
   const router = useRouter();
   if (isPending) return <span className="mono text-[11px]">...</span>;
   const user = data?.user as
-    | { email: string; role?: string }
+    | { email: string; role?: string; teamId?: string | null }
     | undefined;
   if (!user) {
     return (
@@ -18,11 +18,20 @@ export function NavAuth() {
     );
   }
   const isAdmin = user.role === "admin";
+  const isCaptain = user.role === "captain";
   return (
     <div className="flex items-center gap-2">
       {isAdmin && (
         <Link href="/admin" className="btn-primary inline-block text-sm">
           Panel admina
+        </Link>
+      )}
+      {isCaptain && user.teamId && (
+        <Link
+          href={`/druzyny/${user.teamId}`}
+          className="btn-primary inline-block text-sm"
+        >
+          Moja drużyna
         </Link>
       )}
       <span className="mono text-[11px] hidden sm:inline max-w-[140px] truncate">

@@ -67,3 +67,35 @@ export type ScorerRow = {
   teamShortName: string;
   goals: number;
 };
+
+export type UserRole = "admin" | "captain" | "user";
+
+export type AppUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  teamId: string | null;
+  createdAt: string;
+};
+
+export type LineupPlayer = {
+  playerId: string;
+  shirtNumber: number | null;
+  position: "GK" | "DF" | "MF" | "FW";
+  x: number;
+  y: number;
+  isCaptain: boolean;
+};
+
+export type MatchLineup = {
+  matchId: string;
+  teamId: string;
+  formation: string;
+  startingXI: LineupPlayer[];
+  substitutes: LineupPlayer[];
+  coach: string | null;
+  updatedBy: string | null;
+  updatedAt: string;
+  lockedAt: string | null;
+};
