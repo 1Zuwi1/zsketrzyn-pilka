@@ -31,6 +31,16 @@ export async function query<T = unknown>(
   return rows as T[];
 }
 
+// Text-protocol query. Use for statements whose binding can trip up the
+// binary prepared-statement protocol (notably JSON columns).
+export async function queryText<T = unknown>(
+  sql: string,
+  params: (string | number | Date | null)[] = [],
+): Promise<T[]> {
+  const [rows] = await getPool().query(sql, params);
+  return rows as T[];
+}
+
 export async function withTransaction<T>(
   fn: (
     run: (

@@ -1,5 +1,4 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   DEFAULT_FORMATION,
@@ -55,7 +54,6 @@ export function LineupEditor({
   initialLineup: MatchLineup | null;
   backHref: string;
 }) {
-  const router = useRouter();
   const [formation, setFormation] = useState<string>(
     initialLineup?.formation ?? DEFAULT_FORMATION,
   );
@@ -241,8 +239,7 @@ export function LineupEditor({
           coach: coach.trim() || null,
         });
         if (res.ok) {
-          router.push(backHref);
-          router.refresh();
+          window.location.assign(backHref);
         } else {
           setError(res.error);
         }
@@ -370,7 +367,7 @@ export function LineupEditor({
         </button>
         <button
           type="button"
-          onClick={() => router.push(backHref)}
+          onClick={() => window.location.assign(backHref)}
           className="btn-ghost"
           disabled={pending}
         >

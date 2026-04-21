@@ -216,12 +216,14 @@ type AppUserRow = {
 
 function userRoleFrom(role: string): UserRole {
   if (role === "admin" || role === "captain") return role;
-  return "user";
+  return "captain";
 }
 
 export async function getAllUsers(): Promise<AppUser[]> {
+  // Fan (role='user') accounts are unsupported — purge any that exist.
+  await query("DELETE FROM user WHERE role NOT IN ('admin', 'captain')");
   const rows = await query<AppUserRow>(
-    "SELECT id, email, name, role, teamId, createdAt FROM user ORDER BY createdAt DESC",
+    "SELECT id, email, name, role, teamId, createdAt FROM user WHERE role IN ('admin', 'captain') ORDER BY createdAt DESC",
   );
   return rows.map((r) => ({
     id: r.id,

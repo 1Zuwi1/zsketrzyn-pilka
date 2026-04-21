@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { signIn, signUp } from "@/lib/auth-client";
+import { signIn } from "@/lib/auth-client";
 
 export default function LoginPage() {
   return (
@@ -15,10 +15,8 @@ export default function LoginPage() {
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [err, setErr] = useState<string | null>(
     params.get("error") === "brak-uprawnien"
       ? "To konto nie ma uprawnień administratora."
@@ -31,18 +29,10 @@ function LoginInner() {
     setErr(null);
     setLoading(true);
     try {
-      if (mode === "register") {
-        const res = await signUp.email({ email, password, name: name || email });
-        if (res.error) {
-          setErr(res.error.message ?? "Błąd rejestracji");
-          return;
-        }
-      } else {
-        const res = await signIn.email({ email, password });
-        if (res.error) {
-          setErr(res.error.message ?? "Nieprawidłowe dane logowania");
-          return;
-        }
+      const res = await signIn.email({ email, password });
+      if (res.error) {
+        setErr(res.error.message ?? "Nieprawidłowe dane logowania");
+        return;
       }
       // Sprawdź czy user musi zmienić hasło (konto założone przez admina).
       try {
@@ -100,25 +90,8 @@ function LoginInner() {
       </aside>
 
       <div className="bg-chalk p-8 sm:p-12">
-        <div className="flex gap-2 mb-6">
-          <button
-            type="button"
-            onClick={() => setMode("login")}
-            className={`display text-sm px-3 py-2 border-2 border-ink ${
-              mode === "login" ? "bg-ink text-lime" : "bg-chalk text-ink"
-            }`}
-          >
-            Logowanie
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("register")}
-            className={`display text-sm px-3 py-2 border-2 border-ink ${
-              mode === "register" ? "bg-ink text-lime" : "bg-chalk text-ink"
-            }`}
-          >
-            Rejestracja
-          </button>
+        <div className="mb-6 display text-sm px-3 py-2 border-2 border-ink bg-ink text-lime inline-block">
+          Logowanie
         </div>
 
         {err && (
@@ -128,16 +101,6 @@ function LoginInner() {
         )}
 
         <form onSubmit={onSubmit} className="space-y-4">
-          {mode === "register" && (
-            <Field label="Imię i nazwisko">
-              <input
-                className="field"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </Field>
-          )}
           <Field label="E-mail">
             <input
               type="email"
@@ -156,7 +119,7 @@ function LoginInner() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              autoComplete="current-password"
             />
           </Field>
           <button
@@ -164,7 +127,7 @@ function LoginInner() {
             disabled={loading}
             className="btn-primary w-full disabled:opacity-50"
           >
-            {loading ? "..." : mode === "login" ? "Wejdź na boisko" : "Załóż konto"}
+            {loading ? "..." : "Wejdź na boisko"}
           </button>
         </form>
 

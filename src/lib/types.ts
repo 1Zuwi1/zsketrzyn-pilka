@@ -68,7 +68,7 @@ export type ScorerRow = {
   goals: number;
 };
 
-export type UserRole = "admin" | "captain" | "user";
+export type UserRole = "admin" | "captain";
 
 export type AppUser = {
   id: string;

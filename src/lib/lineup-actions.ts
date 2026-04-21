@@ -4,7 +4,7 @@ import {
   getCurrentUserWithRole,
   requireAdminOrCaptain,
 } from "./auth-helpers";
-import { query, uid } from "./db";
+import { query, queryText, uid } from "./db";
 import type { LineupPlayer, MatchLineup } from "./types";
 
 const VALID_POSITIONS = new Set(["GK", "DF", "MF", "FW"]);
@@ -154,44 +154,53 @@ export async function saveLineup(
   const subsJson = JSON.stringify(subs);
   const now = new Date();
 
-  if (existing.length > 0) {
-    await query(
-      `UPDATE match_lineups
-         SET formation = ?, starting_xi = ?, substitutes = ?, coach = ?,
-             updated_by = ?, updated_at = ?
-       WHERE match_id = ? AND team_id = ?`,
-      [
-        formation,
-        startingJson,
-        subsJson,
-        coach,
-        session.user.id,
-        now,
-        input.matchId,
-        input.teamId,
-      ],
-    );
-  } else {
-    await query(
-      `INSERT INTO match_lineups
-         (id, match_id, team_id, formation, starting_xi, substitutes, coach, updated_by, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        uid(),
-        input.matchId,
-        input.teamId,
-        formation,
-        startingJson,
-        subsJson,
-        coach,
-        session.user.id,
-        now,
-      ],
-    );
+  try {
+    if (existing.length > 0) {
+      await queryText(
+        `UPDATE match_lineups
+           SET formation = ?, starting_xi = ?, substitutes = ?, coach = ?,
+               updated_by = ?, updated_at = ?
+         WHERE match_id = ? AND team_id = ?`,
+        [
+          formation,
+          startingJson,
+          subsJson,
+          coach,
+          session.user.id,
+          now,
+          input.matchId,
+          input.teamId,
+        ],
+      );
+    } else {
+      await queryText(
+        `INSERT INTO match_lineups
+           (id, match_id, team_id, formation, starting_xi, substitutes, coach, updated_by, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uid(),
+          input.matchId,
+          input.teamId,
+          formation,
+          startingJson,
+          subsJson,
+          coach,
+          session.user.id,
+          now,
+        ],
+      );
+    }
+  } catch (e) {
+    console.error("[saveLineup] DB write failed", e);
+    return {
+      ok: false,
+      error: `Zapis do bazy nie powiódł się: ${e instanceof Error ? e.message : "nieznany błąd"}`,
+    };
   }
 
   revalidatePath(`/mecze/${input.matchId}`);
   revalidatePath(`/mecze/${input.matchId}/sklady`);
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 

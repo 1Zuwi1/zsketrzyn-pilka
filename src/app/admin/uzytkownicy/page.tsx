@@ -13,7 +13,6 @@ export const dynamic = "force-dynamic";
 const ROLE_LABEL: Record<UserRole, string> = {
   admin: "Super admin",
   captain: "Kapitan",
-  user: "Kibic",
 };
 
 export default async function AdminUsersPage() {
@@ -22,7 +21,6 @@ export default async function AdminUsersPage() {
 
   const admins = users.filter((u) => u.role === "admin");
   const captains = users.filter((u) => u.role === "captain");
-  const regulars = users.filter((u) => u.role === "user");
 
   return (
     <div className="space-y-8">
@@ -124,13 +122,6 @@ export default async function AdminUsersPage() {
         teams={teams}
         teamsById={teamsById}
       />
-      <UserSection
-        title="Kibice"
-        tone="cream"
-        users={regulars}
-        teams={teams}
-        teamsById={teamsById}
-      />
     </div>
   );
 }
@@ -143,7 +134,7 @@ function UserSection({
   teamsById,
 }: {
   title: string;
-  tone: "ink" | "lime" | "cream";
+  tone: "ink" | "lime";
   users: AppUser[];
   teams: Team[];
   teamsById: Map<string, Team>;
@@ -153,11 +144,7 @@ function UserSection({
       <div className="flex items-center gap-3">
         <span
           className={`display text-sm px-2.5 py-1 ${
-            tone === "ink"
-              ? "bg-ink text-lime"
-              : tone === "lime"
-                ? "bg-lime text-ink"
-                : "bg-chalk text-ink border-2 border-ink"
+            tone === "ink" ? "bg-ink text-lime" : "bg-lime text-ink"
           }`}
         >
           {String(users.length).padStart(2, "0")}
@@ -205,9 +192,7 @@ function UserRow({
           className={`tag ${
             user.role === "admin"
               ? "bg-ink text-lime border-ink"
-              : user.role === "captain"
-                ? "bg-lime text-ink border-ink"
-                : "bg-chalk border-ink"
+              : "bg-lime text-ink border-ink"
           }`}
         >
           {ROLE_LABEL[user.role]}
@@ -233,7 +218,6 @@ function UserRow({
             className="field"
             aria-label="Rola"
           >
-            <option value="user">Kibic</option>
             <option value="captain">Kapitan</option>
             <option value="admin">Super admin</option>
           </select>

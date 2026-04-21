@@ -21,9 +21,9 @@ async function loadUserRow(userId: string): Promise<UserRow | null> {
 
 export async function getUserRole(
   userId: string,
-): Promise<{ role: UserRole; teamId: string | null }> {
+): Promise<{ role: UserRole | null; teamId: string | null }> {
   const u = await loadUserRow(userId);
-  if (!u) return { role: "user", teamId: null };
+  if (!u) return { role: null, teamId: null };
   if (u.role === "admin") return { role: "admin", teamId: null };
   const adminEmail = (process.env.ADMIN_EMAIL || "").toLowerCase();
   if (adminEmail && u.email.toLowerCase() === adminEmail) {
@@ -35,7 +35,7 @@ export async function getUserRole(
     return { role: "admin", teamId: null };
   }
   if (u.role === "captain") return { role: "captain", teamId: u.teamId };
-  return { role: "user", teamId: null };
+  return { role: null, teamId: null };
 }
 
 export async function isAdmin(userId: string): Promise<boolean> {
@@ -71,6 +71,7 @@ export async function getCurrentUserWithRole() {
   const session = await getSession();
   if (!session?.user) return null;
   const r = await getUserRole(session.user.id);
+  if (!r.role) return null;
   return {
     id: session.user.id,
     email: session.user.email,

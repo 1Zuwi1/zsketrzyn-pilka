@@ -193,7 +193,7 @@ export async function updateUserRole(formData: FormData) {
   const teamId = str(formData.get("teamId")) || null;
 
   if (!userId) throw new Error("Brak userId.");
-  if (role !== "admin" && role !== "captain" && role !== "user") {
+  if (role !== "admin" && role !== "captain") {
     throw new Error("Niepoprawna rola.");
   }
   if (role === "captain" && !teamId) {

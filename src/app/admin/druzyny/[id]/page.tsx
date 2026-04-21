@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ResetPasswordButton } from "@/components/reset-password-button";
 import { addPlayer, deletePlayer, updatePlayer } from "@/lib/actions";
 import { getAllUsers, getPlayers, getTeam } from "@/lib/repo";
-import { createCaptain, updateUserRole } from "@/lib/user-actions";
+import { createCaptain, deleteUser } from "@/lib/user-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -81,15 +81,13 @@ export default async function AdminTeamRosterPage({
                 </div>
                 <span className="tag bg-lime text-ink border-ink">Kapitan</span>
                 <ResetPasswordButton userId={c.id} userEmail={c.email} />
-                <form action={updateUserRole}>
+                <form action={deleteUser}>
                   <input type="hidden" name="userId" value={c.id} />
-                  <input type="hidden" name="role" value="user" />
-                  <input type="hidden" name="teamId" value="" />
                   <button
                     type="submit"
                     className="mono text-[11px] uppercase tracking-[0.2em] text-rust hover:underline"
                   >
-                    odbierz
+                    usuń
                   </button>
                 </form>
               </li>
