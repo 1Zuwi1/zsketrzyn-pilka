@@ -240,19 +240,40 @@ export function LineupEditor({
         </div>
       )}
 
-      {/* Boisko poziome - Flashscore style */}
+      {/* Boisko: pionowe na mobile, poziome na desktopie */}
       <div className="card p-0 overflow-hidden">
-        <div className="relative pitch-stripes w-full aspect-[4/3] sm:aspect-[16/9] overflow-hidden">
+        {/* MOBILE - pionowe boisko (własna połowa, bramka u dołu) */}
+        <div className="sm:hidden relative pitch-stripes w-full aspect-[3/4] overflow-hidden">
+          <EditorPitchLinesV />
+          {slots.map((s, i) => (
+            <SlotMarker
+              key={`m-${formation}-${s.position}-${s.x}-${s.y}`}
+              slot={s}
+              color={team.color}
+              cx={s.x}
+              cy={100 - s.y}
+              playerName={
+                s.playerId ? playersById.get(s.playerId)?.name ?? "?" : null
+              }
+              onClick={() => pickFor({ kind: "slot", index: i })}
+              onDrop={(e) => onDropToSlot(e, i)}
+              onClear={() => clearSlot(i)}
+              onMoveToBench={() => moveSlotToBench(i)}
+            />
+          ))}
+        </div>
+
+        {/* DESKTOP - poziome boisko w stylu flashscore */}
+        <div className="hidden sm:block relative pitch-stripes w-full aspect-[16/9] overflow-hidden">
           <EditorPitchLines />
-          {/* Ławka przeciwnika - przyciemnione pole */}
           <div className="absolute inset-y-0 right-0 w-1/2 bg-ink/20 pointer-events-none flex items-center justify-center">
-            <div className="mono text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-chalk/50 rotate-90 sm:rotate-0 whitespace-nowrap">
+            <div className="mono text-[11px] uppercase tracking-[0.3em] text-chalk/50 whitespace-nowrap">
               · połowa przeciwnika ·
             </div>
           </div>
           {slots.map((s, i) => (
             <SlotMarker
-              key={`${formation}-${s.position}-${s.x}-${s.y}`}
+              key={`d-${formation}-${s.position}-${s.x}-${s.y}`}
               slot={s}
               color={team.color}
               cx={s.y * 0.5}
@@ -337,6 +358,33 @@ function EditorPitchLines() {
   );
 }
 
+function EditorPitchLinesV() {
+  // Boisko pionowe, własna połowa: bramka u dołu, linia środkowa u góry.
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      aria-hidden
+    >
+      <g stroke="rgba(255,255,255,0.4)" strokeWidth="0.4" fill="none">
+        {/* obwódka */}
+        <rect x="1" y="1" width="98" height="98" />
+        {/* linia środkowa na górze */}
+        <line x1="1" y1="1" x2="99" y2="1" />
+        {/* połowa koła środkowego */}
+        <path d="M 40 1 A 10 10 0 0 0 60 1" />
+        <circle cx="50" cy="1" r="0.8" fill="rgba(255,255,255,0.4)" />
+        {/* pole karne u dołu */}
+        <rect x="25" y="78" width="50" height="21" />
+        <rect x="38" y="90" width="24" height="9" />
+        {/* łuk pola karnego */}
+        <path d="M 40 78 A 10 10 0 0 0 60 78" />
+      </g>
+    </svg>
+  );
+}
+
 function SlotMarker({
   slot,
   color,
@@ -397,7 +445,7 @@ function SlotMarker({
           </div>
         </>
       ) : (
-        <div className="mt-1 mono text-[10px] uppercase tracking-[0.2em] text-chalk/80 bg-ink/50 px-1.5 py-0.5">
+        <div className="mt-1 hidden sm:block mono text-[10px] uppercase tracking-[0.2em] text-chalk/80 bg-ink/50 px-1.5 py-0.5">
           wybierz
         </div>
       )}

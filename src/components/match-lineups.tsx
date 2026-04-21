@@ -211,48 +211,90 @@ function CombinedPitch({
   //          cy = 100 - p.x                     (lustro w pionie, żeby nie nakładali się)
   return (
     <div className="relative pitch-stripes w-full border-b-2 border-ink overflow-hidden">
-      <div className="relative w-full max-w-3xl mx-auto aspect-[5/3] sm:aspect-[16/9]">
+      {/* MOBILE - orientacja pionowa (dom na górze, goście na dole) */}
+      <div className="sm:hidden relative w-full mx-auto aspect-[3/4] max-w-md">
+        <PitchLinesV />
+        {homeResolved.synthetic ? (
+          <HalfPlaceholder
+            side="top"
+            canEdit={canEditHome}
+            matchId={matchId}
+            teamId={home.id}
+          />
+        ) : (
+          homeResolved.starting.map((p) => (
+            <PlayerDot
+              key={`h-m-${p.playerId}`}
+              player={homeById.get(p.playerId) ?? null}
+              lp={p}
+              color={home.color}
+              cx={p.x}
+              cy={p.y * 0.5}
+            />
+          ))
+        )}
+        {awayResolved.synthetic ? (
+          <HalfPlaceholder
+            side="bottom"
+            canEdit={canEditAway}
+            matchId={matchId}
+            teamId={away.id}
+          />
+        ) : (
+          awayResolved.starting.map((p) => (
+            <PlayerDot
+              key={`a-m-${p.playerId}`}
+              player={awayById.get(p.playerId) ?? null}
+              lp={p}
+              color={away.color}
+              cx={100 - p.x}
+              cy={100 - p.y * 0.5}
+            />
+          ))
+        )}
+      </div>
+
+      {/* DESKTOP - orientacja pozioma (dom po lewej, goście po prawej) */}
+      <div className="hidden sm:block relative w-full max-w-3xl mx-auto aspect-[16/9]">
         <PitchLinesH />
-
-      {homeResolved.synthetic ? (
-        <HalfPlaceholder
-          side="left"
-          canEdit={canEditHome}
-          matchId={matchId}
-          teamId={home.id}
-        />
-      ) : (
-        homeResolved.starting.map((p) => (
-          <PlayerDot
-            key={`h-${p.playerId}`}
-            player={homeById.get(p.playerId) ?? null}
-            lp={p}
-            color={home.color}
-            cx={p.y * 0.5}
-            cy={p.x}
+        {homeResolved.synthetic ? (
+          <HalfPlaceholder
+            side="left"
+            canEdit={canEditHome}
+            matchId={matchId}
+            teamId={home.id}
           />
-        ))
-      )}
-
-      {awayResolved.synthetic ? (
-        <HalfPlaceholder
-          side="right"
-          canEdit={canEditAway}
-          matchId={matchId}
-          teamId={away.id}
-        />
-      ) : (
-        awayResolved.starting.map((p) => (
-          <PlayerDot
-            key={`a-${p.playerId}`}
-            player={awayById.get(p.playerId) ?? null}
-            lp={p}
-            color={away.color}
-            cx={100 - p.y * 0.5}
-            cy={100 - p.x}
+        ) : (
+          homeResolved.starting.map((p) => (
+            <PlayerDot
+              key={`h-d-${p.playerId}`}
+              player={homeById.get(p.playerId) ?? null}
+              lp={p}
+              color={home.color}
+              cx={p.y * 0.5}
+              cy={p.x}
+            />
+          ))
+        )}
+        {awayResolved.synthetic ? (
+          <HalfPlaceholder
+            side="right"
+            canEdit={canEditAway}
+            matchId={matchId}
+            teamId={away.id}
           />
-        ))
-      )}
+        ) : (
+          awayResolved.starting.map((p) => (
+            <PlayerDot
+              key={`a-d-${p.playerId}`}
+              player={awayById.get(p.playerId) ?? null}
+              lp={p}
+              color={away.color}
+              cx={100 - p.y * 0.5}
+              cy={100 - p.x}
+            />
+          ))
+        )}
       </div>
     </div>
   );
@@ -298,17 +340,23 @@ function HalfPlaceholder({
   matchId,
   teamId,
 }: {
-  side: "left" | "right";
+  side: "left" | "right" | "top" | "bottom";
   canEdit: boolean;
   matchId: string;
   teamId: string;
 }) {
+  // Pozycjonowanie: pionowe warianty pokrywają całą szerokość w swojej połowie
+  // (top / bottom), poziome zajmują stronę (left / right).
+  const posClass =
+    side === "left"
+      ? "top-1/2 -translate-y-1/2 left-3 max-w-[45%]"
+      : side === "right"
+        ? "top-1/2 -translate-y-1/2 right-3 max-w-[45%]"
+        : side === "top"
+          ? "top-3 left-1/2 -translate-x-1/2 max-w-[80%]"
+          : "bottom-3 left-1/2 -translate-x-1/2 max-w-[80%]";
   return (
-    <div
-      className={`absolute top-1/2 -translate-y-1/2 ${
-        side === "left" ? "left-3" : "right-3"
-      } max-w-[45%] text-center`}
-    >
+    <div className={`absolute ${posClass} text-center`}>
       <div className="bg-ink/75 backdrop-blur-sm border-2 border-chalk/30 px-3 py-3 sm:px-4 sm:py-4">
         <div className="mono text-[9px] sm:text-[10px] uppercase tracking-[0.25em] text-lime">
           Brak składu
@@ -326,6 +374,37 @@ function HalfPlaceholder({
         )}
       </div>
     </div>
+  );
+}
+
+function PitchLinesV() {
+  // Boisko pionowe: dom na górze (bramka u góry), goście na dole (bramka u dołu),
+  // linia środkowa w poziomie przez środek.
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      aria-hidden
+    >
+      <g stroke="rgba(255,255,255,0.4)" strokeWidth="0.4" fill="none">
+        {/* obwódka */}
+        <rect x="1" y="1" width="98" height="98" />
+        {/* linia środkowa */}
+        <line x1="1" y1="50" x2="99" y2="50" />
+        {/* koło środkowe */}
+        <circle cx="50" cy="50" r="10" />
+        <circle cx="50" cy="50" r="0.8" fill="rgba(255,255,255,0.4)" />
+        {/* pole karne górne (dom) */}
+        <rect x="30" y="1" width="40" height="18" />
+        <rect x="40" y="1" width="20" height="7" />
+        <path d="M 40 19 A 10 10 0 0 0 60 19" />
+        {/* pole karne dolne (goście) */}
+        <rect x="30" y="81" width="40" height="18" />
+        <rect x="40" y="92" width="20" height="7" />
+        <path d="M 40 81 A 10 10 0 0 1 60 81" />
+      </g>
+    </svg>
   );
 }
 
