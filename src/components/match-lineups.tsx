@@ -225,17 +225,23 @@ function FieldHalf({
             style={{ left: `${x}%`, top: `${y}%` }}
           >
             <div
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-ink flex items-center justify-center display text-base sm:text-lg shrink-0 shadow"
+              className={`relative w-9 h-9 sm:w-12 sm:h-12 rounded-full border-2 flex items-center justify-center display text-sm sm:text-lg shrink-0 shadow ${
+                p.isCaptain ? "border-lime ring-2 ring-lime/50" : "border-ink"
+              }`}
               style={{ backgroundColor: color }}
               title={player?.name ?? "?"}
             >
               <span className="text-chalk mix-blend-difference">
                 {p.shirtNumber ?? "—"}
               </span>
+              {p.isCaptain && (
+                <span className="absolute -top-1 -right-1 bg-lime text-ink text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-ink">
+                  C
+                </span>
+              )}
             </div>
-            <div className="mt-1 px-1.5 py-0.5 bg-ink text-chalk mono text-[10px] uppercase tracking-[0.1em] max-w-[80px] truncate leading-none">
+            <div className="mt-1 px-1.5 py-0.5 bg-ink text-chalk mono text-[9px] sm:text-[10px] uppercase tracking-[0.1em] max-w-[70px] sm:max-w-[90px] truncate leading-none">
               {player?.name.split(" ").slice(-1)[0] ?? "?"}
-              {p.isCaptain && <span className="ml-1 text-lime">(C)</span>}
             </div>
           </div>
         );

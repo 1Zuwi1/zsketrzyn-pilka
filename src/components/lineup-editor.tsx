@@ -289,11 +289,10 @@ export function LineupEditor({
         </div>
       </div>
 
-      <div className="card p-3 bg-cream-soft border-dashed text-sm text-ink-soft">
-        <strong className="text-ink">Jak edytować:</strong> kliknij pozycję na
-        boisku, aby wybrać zawodnika. Aby zmienić gracza na pozycji — po prostu
-        kliknij jego kółko i wybierz kogoś innego. Gwiazdka (★) nadaje opaskę
-        kapitana.
+      <div className="card p-3 bg-cream-soft border-dashed text-xs sm:text-sm text-ink-soft">
+        <strong className="text-ink">Jak edytować:</strong> dotknij pozycję na
+        boisku, żeby wybrać zawodnika. Dotknij wypełnioną pozycję, żeby zmienić
+        gracza, nadać opaskę kapitana lub przenieść na ławkę.
       </div>
 
       {error && (
@@ -384,6 +383,9 @@ export function LineupEditor({
           teamColor={team.color}
           onPick={handlePick}
           onClose={() => setPicker(null)}
+          onToggleCaptain={toggleCaptain}
+          onMoveToBench={moveSlotToBench}
+          onClear={clearSlot}
         />
       )}
     </div>
@@ -428,7 +430,7 @@ function SlotMarker({
             ? `${playerName} — kliknij, aby zmienić`
             : `Kliknij, aby wybrać zawodnika (${slot.position})`
         }
-        className={`w-14 h-14 rounded-full border-2 flex items-center justify-center display text-lg shadow relative transition-transform hover:scale-105 ${
+        className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full border-2 flex items-center justify-center display text-base sm:text-lg shadow relative transition-transform active:scale-95 sm:hover:scale-105 ${
           slot.playerId
             ? slot.isCaptain
               ? "border-lime"
@@ -455,10 +457,10 @@ function SlotMarker({
 
       {slot.playerId ? (
         <>
-          <div className="mt-1 px-1.5 py-0.5 bg-ink text-chalk mono text-[10px] uppercase tracking-[0.1em] max-w-[100px] truncate leading-none">
-            {playerName}
+          <div className="mt-1 px-1.5 py-0.5 bg-ink text-chalk mono text-[9px] sm:text-[10px] uppercase tracking-[0.1em] max-w-[72px] sm:max-w-[100px] truncate leading-none">
+            {playerName?.split(" ").slice(-1)[0] ?? "?"}
           </div>
-          <div className="mt-1 flex items-center gap-1">
+          <div className="mt-1 hidden sm:flex items-center gap-1">
             <button
               type="button"
               onClick={onToggleCaptain}
@@ -672,6 +674,9 @@ function PlayerPicker({
   teamColor,
   onPick,
   onClose,
+  onToggleCaptain,
+  onMoveToBench,
+  onClear,
 }: {
   target: PickerTarget;
   squad: Player[];
@@ -680,6 +685,9 @@ function PlayerPicker({
   teamColor: string;
   onPick: (playerId: string) => void;
   onClose: () => void;
+  onToggleCaptain: (index: number) => void;
+  onMoveToBench: (index: number) => void;
+  onClear: (index: number) => void;
 }) {
   const [q, setQ] = useState("");
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -703,6 +711,12 @@ function PlayerPicker({
 
   const currentPlayerId =
     target.kind === "slot" ? slots[target.index]?.playerId : "";
+  const activeSlot =
+    target.kind === "slot" && currentPlayerId ? slots[target.index] : null;
+  const activeSlotIndex = target.kind === "slot" ? target.index : -1;
+  const activeSlotPlayer = activeSlot
+    ? squad.find((p) => p.id === activeSlot.playerId) ?? null
+    : null;
 
   const filtered = squad.filter((p) =>
     q.trim()
@@ -741,6 +755,69 @@ function PlayerPicker({
             ×
           </button>
         </div>
+        {activeSlot && activeSlotPlayer && (
+          <div className="px-3 py-3 border-b-2 border-ink/10 bg-cream-soft space-y-2">
+            <div className="mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">
+              Aktualnie na pozycji
+            </div>
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 flex items-center justify-center display text-base shrink-0 border-2 border-ink"
+                style={{ backgroundColor: teamColor }}
+              >
+                <span className="text-chalk mix-blend-difference">
+                  {activeSlotPlayer.number ?? "—"}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold truncate">
+                  {activeSlotPlayer.name}
+                </div>
+                <div className="mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">
+                  {activeSlot.position}
+                  {activeSlot.isCaptain && (
+                    <span className="ml-2 text-lime">· Kapitan</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onToggleCaptain(activeSlotIndex);
+                }}
+                className={`display text-xs px-2.5 py-1.5 border-2 border-ink ${
+                  activeSlot.isCaptain
+                    ? "bg-lime text-ink"
+                    : "bg-chalk text-ink hover:bg-lime"
+                }`}
+              >
+                ★ {activeSlot.isCaptain ? "Zdejmij opaskę" : "Nadaj opaskę"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onMoveToBench(activeSlotIndex);
+                  onClose();
+                }}
+                className="display text-xs px-2.5 py-1.5 border-2 border-ink bg-chalk hover:bg-ink hover:text-lime"
+              >
+                ↓ Na ławkę
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onClear(activeSlotIndex);
+                  onClose();
+                }}
+                className="display text-xs px-2.5 py-1.5 border-2 border-rust text-rust hover:bg-rust hover:text-chalk"
+              >
+                × Usuń z pozycji
+              </button>
+            </div>
+          </div>
+        )}
         <div className="p-3 border-b-2 border-ink/10">
           <input
             ref={searchRef}

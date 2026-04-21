@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { MatchLineupsBoard } from "@/components/match-lineups";
 import { MatchTabs } from "@/components/match-tabs";
+import { getCurrentUserWithRole } from "@/lib/auth-helpers";
 import {
   getGoals,
   getMatch,
+  getMatchLineups,
   getPlayers,
   getTeam,
 } from "@/lib/repo";
@@ -19,14 +22,25 @@ export default async function MatchDetailPage({
   const { id } = await params;
   const match = await getMatch(id);
   if (!match) notFound();
-  const [home, away, goals, homePlayers, awayPlayers] = await Promise.all([
-    getTeam(match.homeTeamId),
-    getTeam(match.awayTeamId),
-    getGoals(match.id),
-    getPlayers(match.homeTeamId),
-    getPlayers(match.awayTeamId),
-  ]);
+  const [home, away, goals, homePlayers, awayPlayers, lineups, me] =
+    await Promise.all([
+      getTeam(match.homeTeamId),
+      getTeam(match.awayTeamId),
+      getGoals(match.id),
+      getPlayers(match.homeTeamId),
+      getPlayers(match.awayTeamId),
+      getMatchLineups(match.id),
+      getCurrentUserWithRole(),
+    ]);
   if (!home || !away) notFound();
+
+  const homeLineup = lineups.find((l) => l.teamId === home.id) ?? null;
+  const awayLineup = lineups.find((l) => l.teamId === away.id) ?? null;
+  const canEdit = (teamId: string) => {
+    if (!me || match.played) return false;
+    if (me.role === "admin") return true;
+    return me.role === "captain" && me.teamId === teamId;
+  };
 
   const date = new Date(match.date);
   const fullDate = date.toLocaleDateString("pl-PL", {
@@ -185,9 +199,35 @@ export default async function MatchDetailPage({
         </aside>
       </section>
 
-      <section className="grid md:grid-cols-2 gap-5">
-        <Lineup team={home} players={homePlayers} goals={homeGoals} />
-        <Lineup team={away} players={awayPlayers} goals={awayGoals} />
+      <section className="space-y-4">
+        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+          <h2 className="display text-3xl">Składy na murawie</h2>
+          <Link
+            href={`/mecze/${match.id}/sklady`}
+            className="mono text-[11px] uppercase tracking-[0.3em] text-ink-soft hover:text-pitch"
+          >
+            pełny widok →
+          </Link>
+        </div>
+        <MatchLineupsBoard
+          home={home}
+          away={away}
+          homePlayers={homePlayers}
+          awayPlayers={awayPlayers}
+          homeLineup={homeLineup}
+          awayLineup={awayLineup}
+          matchId={match.id}
+          canEditHome={canEdit(home.id)}
+          canEditAway={canEdit(away.id)}
+        />
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="display text-3xl">Kadra zawodników</h2>
+        <div className="grid md:grid-cols-2 gap-5">
+          <Lineup team={home} players={homePlayers} goals={homeGoals} />
+          <Lineup team={away} players={awayPlayers} goals={awayGoals} />
+        </div>
       </section>
     </div>
   );
