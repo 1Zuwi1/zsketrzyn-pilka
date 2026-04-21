@@ -39,7 +39,7 @@ function parseLineupPlayer(raw: unknown): LineupPlayer | null {
     position,
     x: clampPct(o.x),
     y: clampPct(o.y),
-    isCaptain: !!o.isCaptain,
+    isCaptain: false,
   };
 }
 
@@ -113,11 +113,6 @@ export async function saveLineup(
   if (subs.length > MAX_SUBS) {
     return { ok: false, error: `Max ${MAX_SUBS} rezerwowych.` };
   }
-  const captains = starting.filter((p) => p.isCaptain).length;
-  if (captains > 1) {
-    return { ok: false, error: "Tylko jeden kapitan w składzie." };
-  }
-
   const ids = new Set<string>();
   for (const p of [...starting, ...subs]) {
     if (ids.has(p.playerId)) {

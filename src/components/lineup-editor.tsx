@@ -4,7 +4,6 @@ import {
   DEFAULT_FORMATION,
   FORMATION_NAMES,
   getFormationPositions,
-  MAX_SUBS,
   STARTING_SIZE,
 } from "@/lib/formations";
 import { saveLineup } from "@/lib/lineup-actions";
@@ -138,16 +137,6 @@ export function LineupEditor({
     clearSlot(idx);
   }
 
-  function toggleCaptain(idx: number) {
-    setSlots((curr) =>
-      curr.map((s, i) =>
-        i === idx
-          ? { ...s, isCaptain: !s.isCaptain }
-          : { ...s, isCaptain: false },
-      ),
-    );
-  }
-
   function pickFor(target: PickerTarget) {
     setPicker(target);
   }
@@ -171,11 +160,6 @@ export function LineupEditor({
     const filled = slots.filter((s) => s.playerId);
     if (filled.length !== STARTING_SIZE) {
       setError(`Uzupełnij wszystkie ${STARTING_SIZE} pozycji na boisku.`);
-      return;
-    }
-    const captains = filled.filter((s) => s.isCaptain).length;
-    if (captains === 0) {
-      setError("Zaznacz kapitana (C) na jednym z zawodników.");
       return;
     }
     startTransition(async () => {
@@ -204,34 +188,50 @@ export function LineupEditor({
   const filledCount = slots.filter((s) => s.playerId).length;
 
   return (
-    <div className="space-y-6">
-      <div className="card p-4 flex flex-wrap items-end gap-4">
-        <div className="flex-1 min-w-[180px]">
-          <div className="mono text-[11px] uppercase tracking-[0.25em] text-ink-soft mb-1.5">
-            Formacja
+    <div className="space-y-5 pb-24">
+      {/* Pasek: formacja + licznik */}
+      <div className="card p-0 overflow-hidden">
+        <div
+          className="flex items-center gap-3 p-3 sm:p-4"
+          style={{ backgroundColor: team.color }}
+        >
+          <div className="w-10 h-10 border-2 border-ink flex items-center justify-center display text-sm shrink-0 bg-chalk/20">
+            <span className="text-chalk mix-blend-difference">
+              {team.shortName.slice(0, 3).toUpperCase()}
+            </span>
           </div>
-          <select
-            value={formation}
-            onChange={(e) => changeFormation(e.target.value)}
-            className="field w-full"
-          >
-            {FORMATION_NAMES.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
+          <div className="flex-1 min-w-0">
+            <div className="display text-lg sm:text-xl text-chalk mix-blend-difference truncate">
+              {team.name}
+            </div>
+            <div className="mono text-[10px] uppercase tracking-[0.25em] text-chalk mix-blend-difference opacity-80">
+              Tryb kapitana · {filledCount}/{STARTING_SIZE} na boisku ·{" "}
+              {subs.length} rezerwowych
+            </div>
+          </div>
         </div>
-        <div className="mono text-[11px] uppercase tracking-[0.25em] text-ink-soft">
-          {filledCount}/{STARTING_SIZE} na boisku · {subs.length}/{MAX_SUBS}{" "}
-          rezerwowych
+        <div className="flex flex-wrap items-center gap-3 p-3 sm:p-4 border-t-2 border-ink/10 bg-cream-soft">
+          <label className="flex items-center gap-2">
+            <span className="mono text-[11px] uppercase tracking-[0.25em] text-ink-soft">
+              Formacja
+            </span>
+            <select
+              value={formation}
+              onChange={(e) => changeFormation(e.target.value)}
+              className="field !py-1.5"
+            >
+              {FORMATION_NAMES.map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex-1" />
+          <div className="mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">
+            Dotknij pozycji, by wybrać zawodnika
+          </div>
         </div>
-      </div>
-
-      <div className="card p-3 bg-cream-soft border-dashed text-xs sm:text-sm text-ink-soft">
-        <strong className="text-ink">Jak edytować:</strong> dotknij pozycję na
-        boisku, żeby wybrać zawodnika. Dotknij wypełnioną pozycję, żeby zmienić
-        gracza, nadać opaskę kapitana lub przenieść na ławkę.
       </div>
 
       {error && (
@@ -240,57 +240,49 @@ export function LineupEditor({
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="card p-0 overflow-hidden">
-          <div
-            className="p-3 border-b-2 border-ink"
-            style={{ backgroundColor: team.color }}
-          >
-            <div className="display text-lg text-chalk mix-blend-difference">
-              {team.name} — Twoje ustawienie
+      {/* Boisko poziome - Flashscore style */}
+      <div className="card p-0 overflow-hidden">
+        <div className="relative pitch-stripes w-full aspect-[4/3] sm:aspect-[16/9] overflow-hidden">
+          <EditorPitchLines />
+          {/* Ławka przeciwnika - przyciemnione pole */}
+          <div className="absolute inset-y-0 right-0 w-1/2 bg-ink/20 pointer-events-none flex items-center justify-center">
+            <div className="mono text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-chalk/50 rotate-90 sm:rotate-0 whitespace-nowrap">
+              · połowa przeciwnika ·
             </div>
           </div>
-          <div className="relative pitch-stripes aspect-[3/4] w-full">
-            {slots.map((s, i) => (
-              <SlotMarker
-                key={`${formation}-${s.position}-${s.x}-${s.y}`}
-                slot={s}
-                color={team.color}
-                playerName={
-                  s.playerId ? playersById.get(s.playerId)?.name ?? "?" : null
-                }
-                onClick={() => pickFor({ kind: "slot", index: i })}
-                onDrop={(e) => onDropToSlot(e, i)}
-                onClear={() => clearSlot(i)}
-                onToggleCaptain={() => toggleCaptain(i)}
-                onMoveToBench={() => moveSlotToBench(i)}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <BenchPanel
-            teamColor={team.color}
-            subs={subs}
-            playersById={playersById}
-          />
-
-          <SquadOverview
-            squad={squad}
-            slots={slots}
-            subs={subs}
-            teamColor={team.color}
-          />
+          {slots.map((s, i) => (
+            <SlotMarker
+              key={`${formation}-${s.position}-${s.x}-${s.y}`}
+              slot={s}
+              color={team.color}
+              cx={s.y * 0.5}
+              cy={s.x}
+              playerName={
+                s.playerId ? playersById.get(s.playerId)?.name ?? "?" : null
+              }
+              onClick={() => pickFor({ kind: "slot", index: i })}
+              onDrop={(e) => onDropToSlot(e, i)}
+              onClear={() => clearSlot(i)}
+              onMoveToBench={() => moveSlotToBench(i)}
+            />
+          ))}
         </div>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap sticky bottom-0 bg-cream/95 backdrop-blur py-3 border-t-2 border-ink/10">
+      {/* Rezerwowi automatyczni */}
+      <BenchPanel
+        teamColor={team.color}
+        subs={subs}
+        playersById={playersById}
+      />
+
+      {/* Sticky pasek akcji */}
+      <div className="flex items-center gap-3 flex-wrap fixed bottom-0 left-0 right-0 z-30 bg-cream/95 backdrop-blur px-4 py-3 border-t-2 border-ink shadow-lg">
         <button
           type="button"
           onClick={onSave}
           disabled={pending}
-          className="btn-primary disabled:opacity-50"
+          className="btn-primary disabled:opacity-50 flex-1 sm:flex-none"
         >
           {pending ? "Zapisywanie…" : "Zapisz skład"}
         </button>
@@ -313,7 +305,6 @@ export function LineupEditor({
           teamColor={team.color}
           onPick={handlePick}
           onClose={() => setPicker(null)}
-          onToggleCaptain={toggleCaptain}
           onMoveToBench={moveSlotToBench}
           onClear={clearSlot}
         />
@@ -322,30 +313,53 @@ export function LineupEditor({
   );
 }
 
+function EditorPitchLines() {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      aria-hidden
+    >
+      <g stroke="rgba(255,255,255,0.4)" strokeWidth="0.4" fill="none">
+        <rect x="1" y="1" width="98" height="98" />
+        <line x1="50" y1="1" x2="50" y2="99" />
+        <circle cx="50" cy="50" r="10" />
+        <circle cx="50" cy="50" r="0.8" fill="rgba(255,255,255,0.4)" />
+        <rect x="1" y="30" width="18" height="40" />
+        <rect x="1" y="40" width="7" height="20" />
+        <rect x="81" y="30" width="18" height="40" />
+        <rect x="92" y="40" width="7" height="20" />
+        <path d="M 19 40 A 10 10 0 0 1 19 60" />
+        <path d="M 81 40 A 10 10 0 0 0 81 60" />
+      </g>
+    </svg>
+  );
+}
+
 function SlotMarker({
   slot,
   color,
+  cx,
+  cy,
   playerName,
   onClick,
   onDrop,
-  onClear,
-  onToggleCaptain,
-  onMoveToBench,
 }: {
   slot: Slot;
   color: string;
+  cx: number;
+  cy: number;
   playerName: string | null;
   onClick: () => void;
   onDrop: (e: React.DragEvent) => void;
   onClear: () => void;
-  onToggleCaptain: () => void;
   onMoveToBench: () => void;
 }) {
-  const y = 100 - slot.y;
   return (
     <div
-      className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
-      style={{ left: `${slot.x}%`, top: `${y}%` }}
+      className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10"
+      style={{ left: `${cx}%`, top: `${cy}%` }}
     >
       <button
         type="button"
@@ -362,24 +376,15 @@ function SlotMarker({
         }
         className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full border-2 flex items-center justify-center display text-base sm:text-lg shadow relative transition-transform active:scale-95 sm:hover:scale-105 ${
           slot.playerId
-            ? slot.isCaptain
-              ? "border-lime"
-              : "border-ink"
+            ? "border-ink"
             : "border-dashed border-chalk/80 bg-black/25"
         }`}
         style={slot.playerId ? { backgroundColor: color } : undefined}
       >
         {slot.playerId ? (
-          <>
-            <span className="text-chalk mix-blend-difference">
-              {slot.shirtNumber ?? "—"}
-            </span>
-            {slot.isCaptain && (
-              <span className="absolute -top-1 -right-1 bg-lime text-ink text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-ink">
-                C
-              </span>
-            )}
-          </>
+          <span className="text-chalk mix-blend-difference">
+            {slot.shirtNumber ?? "—"}
+          </span>
         ) : (
           <span className="text-chalk/90 text-xs">{slot.position}</span>
         )}
@@ -389,36 +394,6 @@ function SlotMarker({
         <>
           <div className="mt-1 px-1.5 py-0.5 bg-ink text-chalk mono text-[9px] sm:text-[10px] uppercase tracking-[0.1em] max-w-[72px] sm:max-w-[100px] truncate leading-none">
             {playerName?.split(" ").slice(-1)[0] ?? "?"}
-          </div>
-          <div className="mt-1 hidden sm:flex items-center gap-1">
-            <button
-              type="button"
-              onClick={onToggleCaptain}
-              title="Kapitan"
-              className={`w-6 h-6 rounded-full border border-ink text-[11px] flex items-center justify-center ${
-                slot.isCaptain
-                  ? "bg-lime text-ink"
-                  : "bg-chalk text-ink-soft hover:text-ink"
-              }`}
-            >
-              ★
-            </button>
-            <button
-              type="button"
-              onClick={onMoveToBench}
-              title="Na ławkę"
-              className="w-6 h-6 rounded-full border border-ink bg-chalk text-ink-soft hover:text-ink text-[11px] flex items-center justify-center"
-            >
-              ↓
-            </button>
-            <button
-              type="button"
-              onClick={onClear}
-              title="Usuń z pozycji"
-              className="w-6 h-6 rounded-full border border-ink bg-chalk text-rust hover:bg-rust hover:text-chalk text-[11px] flex items-center justify-center"
-            >
-              ×
-            </button>
           </div>
         </>
       ) : (
@@ -483,84 +458,6 @@ function BenchPanel({
   );
 }
 
-function SquadOverview({
-  squad,
-  slots,
-  subs,
-  teamColor,
-}: {
-  squad: Player[];
-  slots: Slot[];
-  subs: LineupPlayer[];
-  teamColor: string;
-}) {
-  const placementOf = (id: string): "slot" | "sub" | "free" => {
-    if (slots.some((s) => s.playerId === id)) return "slot";
-    if (subs.some((s) => s.playerId === id)) return "sub";
-    return "free";
-  };
-
-  return (
-    <div className="card p-0 overflow-hidden">
-      <div className="px-4 py-2 bg-ink text-lime mono text-[11px] uppercase tracking-[0.3em]">
-        Kadra ({squad.length})
-      </div>
-      {squad.length === 0 ? (
-        <div className="p-4 italic text-ink-soft text-sm">Brak zawodników.</div>
-      ) : (
-        <ul className="divide-y-2 divide-ink/10 max-h-[320px] overflow-y-auto">
-          {squad.map((p) => {
-            const place = placementOf(p.id);
-            return (
-              <li
-                key={p.id}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("text/plain", p.id);
-                  e.dataTransfer.effectAllowed = "move";
-                }}
-                className="flex items-center gap-3 p-2 cursor-grab active:cursor-grabbing hover:bg-cream-soft"
-              >
-                <div
-                  className="w-7 h-7 flex items-center justify-center display text-xs shrink-0 border-2 border-ink"
-                  style={{ backgroundColor: teamColor }}
-                >
-                  <span className="text-chalk mix-blend-difference">
-                    {p.number ?? "—"}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate text-sm">
-                    {p.name}
-                  </div>
-                  <div className="mono text-[10px] uppercase tracking-[0.2em] text-ink-soft">
-                    {p.position}
-                  </div>
-                </div>
-                <span
-                  className={`mono text-[10px] uppercase tracking-[0.15em] px-1.5 py-0.5 border ${
-                    place === "slot"
-                      ? "bg-pitch text-chalk border-pitch"
-                      : place === "sub"
-                        ? "bg-lime text-ink border-ink"
-                        : "bg-chalk text-ink-soft border-ink/30"
-                  }`}
-                >
-                  {place === "slot"
-                    ? "skład"
-                    : place === "sub"
-                      ? "ławka"
-                      : "wolny"}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 function PlayerPicker({
   target,
   squad,
@@ -569,7 +466,6 @@ function PlayerPicker({
   teamColor,
   onPick,
   onClose,
-  onToggleCaptain,
   onMoveToBench,
   onClear,
 }: {
@@ -580,7 +476,6 @@ function PlayerPicker({
   teamColor: string;
   onPick: (playerId: string) => void;
   onClose: () => void;
-  onToggleCaptain: (index: number) => void;
   onMoveToBench: (index: number) => void;
   onClear: (index: number) => void;
 }) {
@@ -670,26 +565,10 @@ function PlayerPicker({
                 </div>
                 <div className="mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">
                   {activeSlot.position}
-                  {activeSlot.isCaptain && (
-                    <span className="ml-2 text-lime">· Kapitan</span>
-                  )}
                 </div>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  onToggleCaptain(activeSlotIndex);
-                }}
-                className={`display text-xs px-2.5 py-1.5 border-2 border-ink ${
-                  activeSlot.isCaptain
-                    ? "bg-lime text-ink"
-                    : "bg-chalk text-ink hover:bg-lime"
-                }`}
-              >
-                ★ {activeSlot.isCaptain ? "Zdejmij opaskę" : "Nadaj opaskę"}
-              </button>
               <button
                 type="button"
                 onClick={() => {

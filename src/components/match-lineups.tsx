@@ -208,7 +208,7 @@ function CombinedPitch({
   //   gość:  cx = 100 - p.y * 0.5               (100 = bramka gości, 50 = środek)
   //          cy = 100 - p.x                     (lustro w pionie, żeby nie nakładali się)
   return (
-    <div className="relative pitch-stripes w-full aspect-[5/3] sm:aspect-[16/9] border-b-2 border-ink overflow-hidden">
+    <div className="relative pitch-stripes w-full max-w-3xl mx-auto aspect-[5/3] sm:aspect-[16/9] border-b-2 border-ink overflow-hidden">
       <PitchLinesH />
 
       {homeResolved.synthetic ? (
@@ -273,20 +273,13 @@ function PlayerDot({
       style={{ left: `${cx}%`, top: `${cy}%` }}
     >
       <div
-        className={`relative w-8 h-8 sm:w-11 sm:h-11 rounded-full border-2 flex items-center justify-center display text-xs sm:text-base shadow ${
-          lp.isCaptain ? "border-lime ring-2 ring-lime/60" : "border-ink"
-        }`}
+        className="relative w-8 h-8 sm:w-11 sm:h-11 rounded-full border-2 border-ink flex items-center justify-center display text-xs sm:text-base shadow"
         style={{ backgroundColor: color }}
         title={player?.name ?? "?"}
       >
         <span className="text-chalk mix-blend-difference">
           {lp.shirtNumber ?? "—"}
         </span>
-        {lp.isCaptain && (
-          <span className="absolute -top-1 -right-1 bg-lime text-ink text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-ink">
-            C
-          </span>
-        )}
       </div>
       <div className="mt-1 px-1.5 py-0.5 bg-ink text-chalk mono text-[9px] sm:text-[10px] uppercase tracking-[0.1em] max-w-[68px] sm:max-w-[90px] truncate leading-none">
         {player?.name.split(" ").slice(-1)[0] ?? "?"}
