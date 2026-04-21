@@ -63,7 +63,6 @@ export function LineupEditor({
   const [subs, setSubs] = useState<LineupPlayer[]>(
     initialLineup?.substitutes ?? [],
   );
-  const [coach, setCoach] = useState<string>(initialLineup?.coach ?? "");
   const [error, setError] = useState<string | null>(null);
   const [picker, setPicker] = useState<PickerTarget>(null);
   const [pending, startTransition] = useTransition();
@@ -236,7 +235,7 @@ export function LineupEditor({
           formation,
           startingXI: filled,
           substitutes: subs,
-          coach: coach.trim() || null,
+          coach: null,
         });
         if (res.ok) {
           window.location.assign(backHref);
@@ -271,17 +270,6 @@ export function LineupEditor({
               </option>
             ))}
           </select>
-        </div>
-        <div className="flex-[2] min-w-[220px]">
-          <div className="mono text-[11px] uppercase tracking-[0.25em] text-ink-soft mb-1.5">
-            Trener
-          </div>
-          <input
-            value={coach}
-            onChange={(e) => setCoach(e.target.value)}
-            className="field w-full"
-            placeholder="np. Jan Kowalski"
-          />
         </div>
         <div className="mono text-[11px] uppercase tracking-[0.25em] text-ink-soft">
           {filledCount}/{STARTING_SIZE} na boisku · {subs.length}/{MAX_SUBS}{" "}

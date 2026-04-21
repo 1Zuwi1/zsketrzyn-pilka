@@ -1,9 +1,5 @@
 import Link from "next/link";
-import {
-  DEFAULT_FORMATION,
-  randomLineup,
-  STARTING_SIZE,
-} from "@/lib/formations";
+import { DEFAULT_FORMATION, STARTING_SIZE } from "@/lib/formations";
 import type { LineupPlayer, MatchLineup, Player, Team } from "@/lib/types";
 
 type PitchSide = "home" | "away";
@@ -21,7 +17,7 @@ export type LineupResolved = {
 
 export function resolveLineup(
   lineup: MatchLineup | null,
-  players: Player[],
+  _players: Player[],
 ): LineupResolved {
   if (lineup && lineup.startingXI.length === STARTING_SIZE) {
     return {
@@ -35,20 +31,12 @@ export function resolveLineup(
       },
     };
   }
-  const { starting, subs } = randomLineup(
-    players.map((p) => ({
-      id: p.id,
-      number: p.number,
-      position: p.position,
-    })),
-    lineup?.formation ?? DEFAULT_FORMATION,
-  );
   return {
     lineup,
     resolved: {
       formation: lineup?.formation ?? DEFAULT_FORMATION,
-      starting,
-      subs,
+      starting: [],
+      subs: [],
       coach: lineup?.coach ?? null,
       synthetic: true,
     },
@@ -143,7 +131,8 @@ function TeamBoardSide({
             {team.name}
           </div>
           <div className="mono text-[10px] uppercase tracking-[0.25em] text-chalk mix-blend-difference opacity-80">
-            {side === "home" ? "Gospodarze" : "Goście"} · {resolved.formation}
+            {side === "home" ? "Gospodarze" : "Goście"}
+            {!resolved.synthetic && ` · ${resolved.formation}`}
           </div>
         </div>
         {canEdit && (
@@ -156,43 +145,81 @@ function TeamBoardSide({
         )}
       </div>
 
-      <FieldHalf
-        side={side}
-        color={team.color}
-        starting={resolved.starting}
-        playersById={playersById}
-      />
-
-      {resolved.synthetic && (
-        <div className="px-4 py-2 bg-amber/20 border-t-2 border-amber/40 mono text-[11px] uppercase tracking-[0.2em] text-ink-soft">
-          Skład losowy — kapitan jeszcze nie ustawił
-        </div>
+      {resolved.synthetic ? (
+        <EmptyPitch
+          side={side}
+          canEdit={canEdit}
+          matchId={matchId}
+          teamId={team.id}
+        />
+      ) : (
+        <FieldHalf
+          side={side}
+          color={team.color}
+          starting={resolved.starting}
+          playersById={playersById}
+        />
       )}
+
       {lineup?.lockedAt && (
         <div className="px-4 py-2 bg-ink text-lime mono text-[11px] uppercase tracking-[0.2em]">
           Skład zablokowany (snapshot)
         </div>
       )}
 
-      <PlayerListBlock
-        title="Skład wyjściowy"
-        players={resolved.starting}
-        playersById={playersById}
-        color={team.color}
-      />
-      <PlayerListBlock
-        title="Rezerwowi"
-        players={resolved.subs}
-        playersById={playersById}
-        color={team.color}
-      />
-      <div className="px-4 py-3 border-t-2 border-ink/10">
-        <div className="mono text-[10px] uppercase tracking-[0.3em] text-ink-soft">
-          Trener
+      {!resolved.synthetic && (
+        <>
+          <PlayerListBlock
+            title="Skład wyjściowy"
+            players={resolved.starting}
+            playersById={playersById}
+            color={team.color}
+          />
+          <PlayerListBlock
+            title="Rezerwowi"
+            players={resolved.subs}
+            playersById={playersById}
+            color={team.color}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+function EmptyPitch({
+  side,
+  canEdit,
+  matchId,
+  teamId,
+}: {
+  side: PitchSide;
+  canEdit: boolean;
+  matchId: string;
+  teamId: string;
+}) {
+  return (
+    <div className="relative pitch-stripes aspect-[3/4] w-full border-b-2 border-ink flex items-center justify-center">
+      <PitchLines side={side} />
+      <div className="relative z-10 mx-4 text-center bg-ink/70 backdrop-blur-sm border-2 border-chalk/30 p-5 sm:p-6 max-w-[260px]">
+        <div className="mono text-[10px] uppercase tracking-[0.3em] text-lime">
+          Skład jeszcze nieustawiony
         </div>
-        <div className="font-semibold">
-          {resolved.coach ?? <span className="italic text-ink-soft">—</span>}
+        <div className="display text-xl sm:text-2xl text-chalk mt-2 leading-tight">
+          Czekamy na kapitana
         </div>
+        <p className="text-chalk/80 text-xs sm:text-sm mt-2">
+          Formacja i zawodnicy pojawią się tutaj, gdy tylko skład zostanie
+          zapisany.
+        </p>
+        {canEdit && (
+          <Link
+            href={`/mecze/${matchId}/sklady/edytuj?team=${teamId}`}
+            className="inline-block mt-4 btn-primary text-xs"
+          >
+            Ustaw skład →
+          </Link>
+        )}
       </div>
     </div>
   );
