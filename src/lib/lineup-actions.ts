@@ -9,7 +9,7 @@ import type { LineupPlayer, MatchLineup } from "./types";
 
 const VALID_POSITIONS = new Set(["GK", "DF", "MF", "FW"]);
 const STARTING_SIZE = 6;
-const MAX_SUBS = 7;
+const MAX_SUBS = 30;
 
 function clampPct(n: unknown): number {
   const x = typeof n === "number" ? n : Number(n);

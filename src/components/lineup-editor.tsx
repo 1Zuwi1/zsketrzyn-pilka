@@ -11,12 +11,7 @@ import { saveLineup } from "@/lib/lineup-actions";
 import type { LineupPlayer, MatchLineup, Player, Team } from "@/lib/types";
 
 type Slot = LineupPlayer;
-type PickerTarget =
-  | { kind: "slot"; index: number }
-  | { kind: "sub" }
-  | null;
-
-const POSITIONS: LineupPlayer["position"][] = ["GK", "DF", "MF", "FW"];
+type PickerTarget = { kind: "slot"; index: number } | null;
 
 function initialSlots(formation: string, existing: LineupPlayer[]): Slot[] {
   const positions = getFormationPositions(formation);
@@ -60,9 +55,6 @@ export function LineupEditor({
   const [slots, setSlots] = useState<Slot[]>(() =>
     initialSlots(formation, initialLineup?.startingXI ?? []),
   );
-  const [subs, setSubs] = useState<LineupPlayer[]>(
-    initialLineup?.substitutes ?? [],
-  );
   const [error, setError] = useState<string | null>(null);
   const [picker, setPicker] = useState<PickerTarget>(null);
   const [pending, startTransition] = useTransition();
@@ -71,6 +63,22 @@ export function LineupEditor({
     () => new Map(squad.map((p) => [p.id, p])),
     [squad],
   );
+
+  const subs = useMemo<LineupPlayer[]>(() => {
+    const inSlots = new Set(
+      slots.map((s) => s.playerId).filter((id): id is string => !!id),
+    );
+    return squad
+      .filter((p) => !inSlots.has(p.id))
+      .map((p) => ({
+        playerId: p.id,
+        shirtNumber: p.number,
+        position: guessPosition(p.position),
+        x: 0,
+        y: 0,
+        isCaptain: false,
+      }));
+  }, [slots, squad]);
 
   function changeFormation(name: string) {
     setFormation(name);
@@ -113,7 +121,6 @@ export function LineupEditor({
         return s;
       }),
     );
-    setSubs((curr) => curr.filter((s) => s.playerId !== p.id));
   }
 
   function clearSlot(idx: number) {
@@ -127,32 +134,8 @@ export function LineupEditor({
   }
 
   function moveSlotToBench(idx: number) {
-    const s = slots[idx];
-    if (!s?.playerId) return;
-    const p = playersById.get(s.playerId);
-    if (!p) return;
-    if (subs.length >= MAX_SUBS) {
-      setError(`Ławka pełna (max ${MAX_SUBS}).`);
-      return;
-    }
-    setSlots((curr) =>
-      curr.map((x, i) =>
-        i === idx
-          ? { ...x, playerId: "", shirtNumber: null, isCaptain: false }
-          : x,
-      ),
-    );
-    setSubs((curr) => [
-      ...curr,
-      {
-        playerId: p.id,
-        shirtNumber: p.number,
-        position: guessPosition(p.position),
-        x: 0,
-        y: 0,
-        isCaptain: false,
-      },
-    ]);
+    // Ławka jest teraz zawsze "reszta kadry" - wystarczy zwolnić pozycję.
+    clearSlot(idx);
   }
 
   function toggleCaptain(idx: number) {
@@ -163,36 +146,6 @@ export function LineupEditor({
           : { ...s, isCaptain: false },
       ),
     );
-    setSubs((curr) => curr.map((s) => ({ ...s, isCaptain: false })));
-  }
-
-  function addSub(playerId: string) {
-    const p = playersById.get(playerId);
-    if (!p) return;
-    if (subs.some((s) => s.playerId === p.id)) return;
-    if (subs.length >= MAX_SUBS) return;
-    setSlots((curr) =>
-      curr.map((s) =>
-        s.playerId === p.id
-          ? { ...s, playerId: "", shirtNumber: null, isCaptain: false }
-          : s,
-      ),
-    );
-    setSubs((curr) => [
-      ...curr,
-      {
-        playerId: p.id,
-        shirtNumber: p.number,
-        position: guessPosition(p.position),
-        x: 0,
-        y: 0,
-        isCaptain: false,
-      },
-    ]);
-  }
-
-  function removeSub(playerId: string) {
-    setSubs((curr) => curr.filter((s) => s.playerId !== playerId));
   }
 
   function pickFor(target: PickerTarget) {
@@ -203,8 +156,6 @@ export function LineupEditor({
     if (!picker) return;
     if (picker.kind === "slot") {
       placeInSlot(picker.index, playerId);
-    } else {
-      addSub(playerId);
     }
     setPicker(null);
   }
@@ -323,15 +274,6 @@ export function LineupEditor({
             teamColor={team.color}
             subs={subs}
             playersById={playersById}
-            onAdd={() => pickFor({ kind: "sub" })}
-            onRemove={removeSub}
-            onChangePos={(playerId, pos) =>
-              setSubs((curr) =>
-                curr.map((x) =>
-                  x.playerId === playerId ? { ...x, position: pos } : x,
-                ),
-              )
-            }
           />
 
           <SquadOverview
@@ -492,35 +434,20 @@ function BenchPanel({
   teamColor,
   subs,
   playersById,
-  onAdd,
-  onRemove,
-  onChangePos,
 }: {
   teamColor: string;
   subs: LineupPlayer[];
   playersById: Map<string, Player>;
-  onAdd: () => void;
-  onRemove: (playerId: string) => void;
-  onChangePos: (playerId: string, pos: LineupPlayer["position"]) => void;
 }) {
   return (
     <div className="card p-0 overflow-hidden">
       <div className="px-4 py-2 bg-lime text-ink mono text-[11px] uppercase tracking-[0.3em] flex items-center justify-between">
-        <span>
-          Rezerwowi ({subs.length}/{MAX_SUBS})
-        </span>
-        <button
-          type="button"
-          onClick={onAdd}
-          disabled={subs.length >= MAX_SUBS}
-          className="px-2 py-0.5 bg-ink text-lime text-[11px] disabled:opacity-40"
-        >
-          + dodaj
-        </button>
+        <span>Rezerwowi ({subs.length})</span>
+        <span className="text-[10px] opacity-70">automatycznie</span>
       </div>
       {subs.length === 0 ? (
         <div className="p-4 italic text-ink-soft text-sm">
-          Brak rezerwowych. Kliknij „+ dodaj".
+          Wszyscy zawodnicy są w składzie wyjściowym.
         </div>
       ) : (
         <ul className="divide-y-2 divide-ink/10">
@@ -543,30 +470,10 @@ function BenchPanel({
                   <div className="font-semibold truncate">
                     {p?.name ?? "?"}
                   </div>
-                  <select
-                    value={s.position}
-                    onChange={(e) =>
-                      onChangePos(
-                        s.playerId,
-                        e.target.value as LineupPlayer["position"],
-                      )
-                    }
-                    className="field !py-1 !px-2 text-xs"
-                  >
-                    {POSITIONS.map((pos) => (
-                      <option key={pos} value={pos}>
-                        {pos}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">
+                    {s.position}
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onRemove(s.playerId)}
-                  className="text-rust mono text-[11px] tracking-[0.2em] hover:underline"
-                >
-                  usuń
-                </button>
               </li>
             );
           })}
@@ -824,9 +731,7 @@ function PlayerPicker({
             filtered.map((p) => {
               const place = placement(p.id);
               const isCurrent = p.id === currentPlayerId;
-              const disabled =
-                target.kind === "sub" &&
-                (place === "sub" || subs.length >= MAX_SUBS);
+              const disabled = false;
               return (
                 <li key={p.id}>
                   <button

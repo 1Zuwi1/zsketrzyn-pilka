@@ -1,7 +1,7 @@
 import type { LineupPlayer } from "./types";
 
 export const STARTING_SIZE = 6;
-export const MAX_SUBS = 7;
+export const MAX_SUBS = 30;
 
 // Formacje dla 6-osobowego składu (bramkarz + 5 w polu).
 // Współrzędne liczone dla DOMOWEJ strony boiska (y: 0=linia bramkowa własna,
