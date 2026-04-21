@@ -10,11 +10,11 @@ export function MatchTabs({
   active,
 }: {
   matchId: string;
-  active: "przebieg" | "skladu";
+  active: "przebieg" | "sklady";
 }) {
-  const tabs: (Tab & { key: "przebieg" | "skladu" })[] = [
+  const tabs: (Tab & { key: "przebieg" | "sklady" })[] = [
     { key: "przebieg", href: `/mecze/${matchId}`, label: "Wydarzenia" },
-    { key: "skladu", href: `/mecze/${matchId}/skladu`, label: "Składy" },
+    { key: "sklady", href: `/mecze/${matchId}/sklady`, label: "Składy" },
   ];
   return (
     <nav className="flex gap-2 flex-wrap">

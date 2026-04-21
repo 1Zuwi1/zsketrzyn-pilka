@@ -3,12 +3,7 @@ import { notFound } from "next/navigation";
 import { MatchLineupsBoard } from "@/components/match-lineups";
 import { MatchTabs } from "@/components/match-tabs";
 import { getCurrentUserWithRole } from "@/lib/auth-helpers";
-import {
-  getMatch,
-  getMatchLineups,
-  getPlayers,
-  getTeam,
-} from "@/lib/repo";
+import { getMatch, getMatchLineups, getPlayers, getTeam } from "@/lib/repo";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +49,7 @@ export default async function MatchLineupsPage({
         >
           ← Wydarzenia
         </Link>
-        <MatchTabs matchId={match.id} active="skladu" />
+        <MatchTabs matchId={match.id} active="sklady" />
       </div>
 
       <header className="card p-4 sm:p-6 flex items-center justify-between flex-wrap gap-4">
@@ -63,8 +58,8 @@ export default async function MatchLineupsPage({
             Składy meczu
           </div>
           <div className="display text-3xl sm:text-4xl mt-1">
-            {home.name}{" "}
-            <span className="text-ink-soft text-2xl">vs</span> {away.name}
+            {home.name} <span className="text-ink-soft text-2xl">vs</span>{" "}
+            {away.name}
           </div>
         </div>
         <div className="mono text-[11px] uppercase tracking-[0.3em] text-ink-soft">

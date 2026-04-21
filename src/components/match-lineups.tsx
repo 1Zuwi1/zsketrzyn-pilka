@@ -4,12 +4,7 @@ import {
   randomLineup,
   STARTING_SIZE,
 } from "@/lib/formations";
-import type {
-  LineupPlayer,
-  MatchLineup,
-  Player,
-  Team,
-} from "@/lib/types";
+import type { LineupPlayer, MatchLineup, Player, Team } from "@/lib/types";
 
 type PitchSide = "home" | "away";
 
@@ -153,7 +148,7 @@ function TeamBoardSide({
         </div>
         {canEdit && (
           <Link
-            href={`/mecze/${matchId}/skladu/edytuj?team=${team.id}`}
+            href={`/mecze/${matchId}/sklady/edytuj?team=${team.id}`}
             className="btn-primary text-xs"
           >
             Edytuj skład

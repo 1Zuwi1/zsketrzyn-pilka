@@ -2,12 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { LineupEditor } from "@/components/lineup-editor";
 import { getCurrentUserWithRole } from "@/lib/auth-helpers";
-import {
-  getMatch,
-  getMatchLineup,
-  getPlayers,
-  getTeam,
-} from "@/lib/repo";
+import { getMatch, getMatchLineup, getPlayers, getTeam } from "@/lib/repo";
 
 export const dynamic = "force-dynamic";
 
@@ -30,17 +25,17 @@ export default async function LineupEditPage({
 
   const teamId = sp.team ?? "";
   if (teamId !== match.homeTeamId && teamId !== match.awayTeamId) {
-    redirect(`/mecze/${id}/skladu`);
+    redirect(`/mecze/${id}/sklady`);
   }
 
   // Autoryzacja
   if (me.role !== "admin") {
     if (me.role !== "captain" || me.teamId !== teamId) {
-      redirect(`/mecze/${id}/skladu`);
+      redirect(`/mecze/${id}/sklady`);
     }
   }
   if (match.played) {
-    redirect(`/mecze/${id}/skladu`);
+    redirect(`/mecze/${id}/sklady`);
   }
 
   const [team, players, lineup] = await Promise.all([
@@ -50,7 +45,7 @@ export default async function LineupEditPage({
   ]);
   if (!team) notFound();
 
-  const backHref = `/mecze/${id}/skladu`;
+  const backHref = `/mecze/${id}/sklady`;
 
   return (
     <div className="space-y-6 rise">
@@ -73,8 +68,8 @@ export default async function LineupEditPage({
         <div className="display text-3xl mt-1">Ustaw swój skład</div>
         <p className="mt-2 text-sm text-ink-soft max-w-2xl">
           Przeciągnij zawodników z kadry na pozycje na boisku. Kliknij na
-          zawodnika na boisku, aby nadać mu opaskę kapitana (C). Dodaj do{" "}
-          {7} rezerwowych. Skład zapisany jest widoczny dla wszystkich, a po
+          zawodnika na boisku, aby nadać mu opaskę kapitana (C). Dodaj do {7}{" "}
+          rezerwowych. Skład zapisany jest widoczny dla wszystkich, a po
           rozpoczęciu meczu zostaje zablokowany.
         </p>
       </header>
